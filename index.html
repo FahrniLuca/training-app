@@ -304,11 +304,13 @@ header.top .pill{background:transparent;padding:0}
 .sheet .f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .pill.bad{color:var(--bad)}
 
-/* Schwebende Tab-Leiste, aber ganz unten am Bildschirmrand (--vgap korrigiert den iOS-Standalone-Fehler, bei dem der Viewport zu kurz ist) */
-.tabs{bottom:calc(max(8px, env(safe-area-inset-bottom,0px) - 18px) - var(--vgap,0px))}
-#scroller{bottom:calc(0px - var(--vgap,0px));padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px) - var(--vgap,0px))}
-.sheetwrap{bottom:calc(0px - var(--vgap,0px))}
+/* iOS-Home-Bildschirm-App: Dokument um die Statusleisten-Höhe verlängern, damit iOS die volle Bildschirmhöhe nutzt (sonst bleibt unten ein schwarzer Balken) */
+html{min-height:calc(100% + env(safe-area-inset-top,0px));background:var(--bg)}
+body{min-height:calc(100% + env(safe-area-inset-top,0px))}
+/* Schwebende Tab-Leiste ganz unten, knapp über dem Home-Balken */
+.tabs{bottom:max(8px, calc(env(safe-area-inset-bottom,0px) - 18px))}
+#scroller{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 </style>
 </head>
 <body>
@@ -713,7 +715,7 @@ function fixVgap(){
   const portrait=innerHeight>=innerWidth;
   const sh=portrait?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
   let g=standalone?Math.round(sh-r.bottom):0; if(g<0||g>140) g=0;
-  window.__vgap=g; document.documentElement.style.setProperty("--vgap",g+"px");
+  window.__vgap=g;
 }
 async function boot(){
   render();
