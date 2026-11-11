@@ -6,7 +6,8 @@
 <title>Trainingsbuch</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-title" content="Training">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
@@ -302,6 +303,14 @@ header.top .pill{background:transparent;padding:0}
 .sheet{position:relative;width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
 .sheet .f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .pill.bad{color:var(--bad)}
+
+/* Native iOS-Tabbar: ganz unten, volle Breite, Home-Indikator-Bereich inklusive */
+.tabs{left:0;right:0;bottom:0;max-width:none;margin:0;border:0;border-top:.5px solid rgba(255,255,255,.12);border-radius:0;box-shadow:none;background:rgba(18,18,20,.94);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));justify-content:space-around}
+.tabs a{border-radius:0;padding:4px 0 2px;font-size:10px;font-weight:500;gap:3px;max-width:110px}
+.tabs a svg{width:25px;height:25px}
+.tabs a[aria-current="page"]{background:none;color:var(--accent)}
+#scroller{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 </style>
 </head>
 <body>

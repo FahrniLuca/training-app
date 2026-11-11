@@ -1,6 +1,6 @@
 // Service Worker: hält die App offline verfügbar (App-Dateien im Cache).
 // Die Trainingsdaten liegen im localStorage und werden online mit GitHub synchronisiert.
-const CACHE = 'trainingsbuch-v1';
+const CACHE = 'trainingsbuch-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
