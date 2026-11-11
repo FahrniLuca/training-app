@@ -1,0 +1,1763 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trainingsbuch</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: dark training dashboard (single dark theme by choice): one column of cards, floating 5-tab bar; recovery traffic-light colours + one electric-blue accent. */
+:root{
+  --bg:#08090B; --surface:#131519; --surface2:#1B1E24; --sunk:#0E1013; --fg:#F2F4F7; --muted:#8C94A2; --line:#252931;
+  --accent:#3D8BFF; --accent-ink:#04101F; --plate-red:#FF5A4E; --plate-yellow:#F5B83D; --plate-green:#2FD27A;
+  --good:#2FD27A; --warn:#F5B83D; --bad:#FF5A4E;
+  --c-prot:#FF6B5E; --c-veg:#3DD68C; --c-carb:#F7B93E; --c-fat:#5C9BFF; --c-kraft:#3D8BFF; --c-hyrox:#FF8A3D; --c-lauf:#2ED3B7; --c-ruhe:#A98BFF;
+  --c-pre:#F7B93E; --c-pre2:#D9B26E; --c-during:#FF8A3D; --c-post:#3DD68C;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:16px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,a,input,select,label{touch-action:manipulation}
+input[type="date"]{-webkit-appearance:none;appearance:none;display:block;text-align:left;line-height:1.3}
+input::-webkit-date-and-time-value{text-align:left}
+html,body{background:var(--bg);color:var(--fg);height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5}
+#scroller{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(104px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:32px;text-transform:uppercase}
+h2{font-size:22px;text-transform:uppercase}
+h3{font-size:19px}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:4px}
+header.top > div{min-width:0}
+header.top .pill{margin-bottom:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.grid2:has(> .stat:nth-child(3):last-child){grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid2:has(> .stat:nth-child(3):last-child) .stat{padding:10px}
+.grid2:has(> .stat:nth-child(3):last-child) .stat b{font-size:17px;white-space:normal;overflow:visible;letter-spacing:-.03em}
+.grid2:has(> .stat:nth-child(3):last-child) .stat span{font-size:11.5px;line-height:1.3}
+.stat{background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-mono);font-size:22px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:12px;color:var(--muted)}
+button,.btn{font:600 15px var(--f-body);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;cursor:pointer;min-height:42px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent}
+button.tiny{min-height:32px;padding:4px 10px;font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{font:16px var(--f-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:42px;min-width:0;width:100%}
+input.num{font-family:var(--f-mono);text-align:center}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);flex:1;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--bad)} .pill.acc{color:var(--accent)}
+.plate{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);min-width:0}
+.li:first-child{border-top:0}
+.li .t{min-width:0;flex:1}
+.li .t b{display:block;font-weight:600}
+.li .t > span{display:block}
+.exhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.exhead > :last-child{flex:none}
+.iconrow{display:flex;gap:6px}
+.form{display:grid;gap:10px}
+.form.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.form.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.form .f{min-width:0}
+.banner{border-radius:var(--r);padding:14px 16px;background:var(--sunk);border-left:4px solid var(--plate-yellow);display:flex;flex-direction:column;gap:6px}
+.banner.blue{border-left-color:var(--accent)}
+.ex{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.sets{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 56px 34px;gap:6px;align-items:center}
+.sets .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.sets .n{font-family:var(--f-mono);color:var(--muted);text-align:center}
+.tabs{position:fixed;z-index:20;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:560px;display:flex;justify-content:space-between;padding:5px 6px;background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);border-radius:22px;box-shadow:0 6px 24px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.08);transform:translateZ(0)}
+.tabs a{flex:1;min-width:0;padding:7px 0 6px;border-radius:16px;text-align:center;color:var(--muted);text-decoration:none;font:600 11px var(--f-body);letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs a svg{width:23px;height:23px}
+.tabs a[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto}
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;min-width:0;min-height:38px;border:0;background:transparent;font-size:15px;padding:4px 6px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent)}
+.daypick{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.daypick label{display:flex;min-width:0}
+.daypick input{position:absolute;opacity:0;width:1px;height:1px}
+.daypick span{flex:1;min-width:0;text-align:center;padding:8px 6px;border-radius:8px;border:1px solid var(--line);font-weight:600;cursor:pointer}
+.daypick input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.daypick input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+details{border-top:1px solid var(--line);padding-top:10px}
+.stat.tint{background:color-mix(in srgb,var(--t) 13%,var(--surface));}
+.stat.tint b{color:color-mix(in srgb,var(--t) 75%,var(--fg))}
+.plate-row{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px}
+.plate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pg{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;background:color-mix(in srgb,var(--t) 10%,var(--surface));min-width:0}
+.pg > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pg-dot{width:12px;height:12px;border-radius:50%;background:var(--t);flex:none;margin-top:4px}
+.pg-amt{font-family:var(--f-display);font-weight:700;font-size:17px;color:color-mix(in srgb,var(--t) 80%,var(--fg))}
+.acc-list{display:flex;flex-direction:column;gap:8px}
+details.acc{border:1px solid var(--line);border-radius:12px;padding:0;background:var(--surface);overflow:hidden}
+details.acc[open]{border-color:color-mix(in srgb,var(--acc) 45%,var(--line))}
+details.acc summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;font-weight:400}
+details.acc summary::-webkit-details-marker{display:none}
+.acc-ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--acc) 16%,var(--surface));color:var(--acc)}
+.acc-ic svg{width:21px;height:21px}
+.acc-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.acc-tx b{font-size:16px}
+.chev{color:var(--muted);transition:transform .2s;flex:none}
+details.acc[open] .chev{transform:rotate(180deg)}
+.acc-body{padding:4px 14px 14px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
+.acc-body > :first-child{margin-top:10px}
+.tl-step{display:flex;gap:12px}
+.tl-dot{width:10px;flex:none;border-radius:5px;background:var(--c-pre)}
+.tl-body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.phase{align-self:flex-start;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;color:#fff}
+.phase.pre,.tl-dot.pre{background:var(--c-pre)} .phase.pre2,.tl-dot.pre2{background:var(--c-pre2)} .phase.during,.tl-dot.during{background:var(--c-during)} .phase.post,.tl-dot.post{background:var(--c-post)}
+.phase{color:#0A0B0D}
+.supp-day{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sd{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:10px;background:color-mix(in srgb,var(--t) 12%,var(--surface));min-width:0}
+.supp{border-left:4px solid var(--t);padding:2px 0 2px 12px;display:flex;flex-direction:column;gap:4px}
+.exmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.pill.rest{color:var(--c-lauf);background:color-mix(in srgb,var(--c-lauf) 14%,var(--surface))}
+.prog{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:10px;border-left:4px solid var(--c-carb);background:color-mix(in srgb,var(--c-carb) 12%,var(--surface))}
+.prog.up{border-left-color:var(--c-post);background:color-mix(in srgb,var(--c-post) 13%,var(--surface))}
+.prog.new{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.prog b{font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips label{display:flex}
+.chips input{position:absolute;opacity:0;width:1px;height:1px}
+.chips span{padding:6px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+.chips input:checked+span{background:color-mix(in srgb,var(--accent) 14%,var(--surface));border-color:var(--accent);color:var(--accent)}
+.chips input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+
+.segtop{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--sunk) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.seg button[aria-pressed="true"]{background:var(--surface2)!important;color:var(--fg)!important}
+.hero{background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--accent) 14%,var(--surface)) 0%,var(--surface) 60%)}
+.hero-top{display:flex;gap:16px;align-items:center}
+.ring{width:132px;height:132px;flex:none}
+.hero-tx{min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero-tx h2{font-size:24px}
+.parts{display:flex;flex-direction:column;gap:8px}
+.part{display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:center}
+details.mini{border-top:0;padding-top:0}
+.next .big{font-size:34px;line-height:1}
+.wstrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.wd{display:flex;flex-direction:column;align-items:center;gap:4px}
+.wd.fut{opacity:.5}
+.wl{font-size:11px;color:var(--muted);font-weight:600}
+.wc{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--surface2);color:var(--fg)}
+.wc.on{color:#06080B}
+.wc.plan{background:transparent;box-shadow:inset 0 0 0 2px var(--accent)}
+.wd.today .wl{color:var(--accent)}
+.wd.today .wc:not(.on){box-shadow:inset 0 0 0 2px var(--fg)}
+.wdots{display:flex;gap:3px;height:6px}
+.wdots i{width:6px;height:6px;border-radius:50%}
+.legend{display:flex;flex-wrap:wrap;gap:12px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.legend i.ring-i{box-shadow:inset 0 0 0 2px var(--accent)}
+.loadbars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;height:96px}
+.lb{display:flex;flex-direction:column;align-items:center;gap:4px}
+.lbcol{flex:1;width:100%;display:flex;align-items:flex-end;background:var(--surface2);border-radius:8px;overflow:hidden}
+.lbcol i{width:100%;background:color-mix(in srgb,var(--fg) 30%,var(--surface2));border-radius:8px;min-height:2px}
+.lb span{font-size:11px;color:var(--muted)}
+.vac{border-color:color-mix(in srgb,var(--c-ruhe) 50%,var(--line))}
+.switch{width:52px;min-height:32px;height:32px;border-radius:999px;padding:3px;background:var(--surface2);border:1px solid var(--line);flex:none;display:flex}
+.switch span{width:24px;height:24px;border-radius:50%;background:var(--muted);transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--c-ruhe);border-color:var(--c-ruhe)}
+.switch[aria-checked="true"] span{transform:translateX(20px);background:#fff}
+.ex-list{display:flex;flex-wrap:wrap;gap:6px}
+.food{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--sunk)}
+
+details summary{cursor:pointer;font-weight:600}
+details > div{padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.src{font-size:12px;color:var(--muted)}
+.src a{color:var(--muted)}
+a{color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:8px;font-weight:600;z-index:30}
+.lock{display:flex;gap:10px;align-items:flex-start}
+.bar{height:8px;border-radius:4px;background:var(--sunk);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:4px}
+.bar .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--good) 25%,transparent)}
+.musclerow{display:grid;grid-template-columns:110px 1fr 34px;gap:10px;align-items:center;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-top:0}
+.tablewrap{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ===== Apple-style dark layer (overrides) ===== */
+:root{
+  --bg:#000000; --surface:#1C1C1E; --surface2:#2C2C2E; --sunk:#000000; --fg:#FFFFFF; --muted:#98989F; --line:#38383A;
+  --accent:#0A84FF; --accent-ink:#FFFFFF; --plate-red:#FF453A; --plate-yellow:#FFD60A; --plate-green:#30D158;
+  --good:#30D158; --warn:#FF9F0A; --bad:#FF453A;
+  --c-prot:#FF453A; --c-veg:#30D158; --c-carb:#FFD60A; --c-fat:#0A84FF; --c-kraft:#0A84FF; --c-hyrox:#FF9F0A; --c-lauf:#64D2FF; --c-ruhe:#BF5AF2;
+  --c-pre:#FFD60A; --c-pre2:#E5C07B; --c-during:#FF9F0A; --c-post:#30D158;
+  --c-strain:#0A84FF; --c-sleep:#BF5AF2;
+  --f-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --f-mono:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+  --r:14px;
+}
+body{font-size:16px;letter-spacing:-.01em}
+h1,h2,h3{font-family:var(--f-body);text-transform:none!important;letter-spacing:-.02em}
+h1{font-size:34px;font-weight:700}
+h2{font-size:21px;font-weight:700}
+h3{font-size:17px;font-weight:600}
+.eyebrow{font-family:var(--f-body);font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+.wrap{gap:12px}
+.card{border:0;border-radius:var(--r);padding:16px;gap:12px}
+.stat{background:var(--surface2);border-radius:12px}
+.stat b{font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:-.02em}
+.mono,.num{font-family:var(--f-display);font-variant-numeric:tabular-nums}
+button,.btn{font-family:var(--f-body);border:0;background:var(--surface2);border-radius:12px;font-size:16px;font-weight:600;color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;min-height:50px}
+button.ghost{background:transparent;color:var(--accent)}
+button.tiny{background:transparent;color:var(--accent);font-weight:500;padding:4px 6px}
+input,select,textarea{background:var(--surface2);border:0;border-radius:10px;font-family:var(--f-body)}
+label.f{font-size:13px}
+.pill{background:var(--surface2);font-weight:600;font-size:12px}
+.pill.good{background:color-mix(in srgb,var(--good) 18%,transparent)} .pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent)} .pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent)} .pill.acc{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.seg{background:rgba(118,118,128,.24);border-radius:9px;padding:2px;gap:0}
+.seg button{color:var(--fg);font-weight:600;font-size:14px;min-height:32px;border-radius:7px}
+.seg button[aria-pressed="true"]{background:#636366!important;color:#fff!important}
+.segtop{background:#232326;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:10px;box-shadow:0 0 0 6px var(--bg)}
+.seg button{color:#D1D1D6}
+.li{border-top:.5px solid var(--line)}
+.banner{background:var(--surface);border-left:0;border-radius:var(--r)}
+.ex{background:var(--surface);border:0;border-radius:var(--r)}
+.src{display:none}
+details .src,.acc-body .src{display:block}
+details{border-top:.5px solid var(--line)}
+header.top{padding-top:8px}
+header.top .pill{background:transparent;padding:0}
+.tabs{background:rgba(28,28,30,.72);border:.5px solid rgba(255,255,255,.08);border-radius:28px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.tabs a{font-family:var(--f-body);font-size:10.5px;font-weight:500;border-radius:22px}
+.tabs a[aria-current="page"]{background:rgba(255,255,255,.1);color:var(--accent)}
+.hero{background:var(--surface)}
+.next .big{font-family:var(--f-body);font-size:28px;font-weight:700}
+/* rings */
+.rings-wrap{display:flex;gap:16px;align-items:center}
+.rings{width:150px;height:150px;flex:none}
+.rlegend{display:flex;flex-direction:column;gap:10px;min-width:0;flex:1}
+.rl{display:flex;flex-direction:column;gap:0}
+.rl .k{font-size:13px;font-weight:600}
+.rl .v{font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.rl .v small{font-size:13px;color:var(--muted);font-weight:600;margin-left:3px}
+.rl .s{font-size:12px;color:var(--muted)}
+.verdict{display:flex;gap:10px;align-items:flex-start;padding-top:12px;border-top:.5px solid var(--line)}
+.verdict .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none}
+/* grouped list rows */
+.glist{background:var(--surface);border-radius:var(--r);overflow:hidden}
+.grow{display:flex;align-items:center;gap:12px;padding:12px 16px;min-height:48px;position:relative;width:100%;background:transparent;border-radius:0;color:var(--fg);font-weight:400;text-align:left}
+.grow + .grow::before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--line)}
+.grow.noicon + .grow.noicon::before{left:16px}
+.gicon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff}
+.gicon svg{width:18px;height:18px}
+.gt{flex:1;min-width:0;display:flex;flex-direction:column}
+.gt b{font-weight:500;font-size:16px}
+.gt span{font-size:13px;color:var(--muted)}
+.gv{font-family:var(--f-display);font-weight:600;color:var(--muted);font-size:16px;white-space:nowrap}
+.chev-r{color:#5A5A5F;flex:none}
+.sechead{font-size:13px;color:var(--muted);padding:6px 16px 0;font-weight:500}
+.secfoot{font-size:13px;color:var(--muted);padding:0 16px}
+/* summary tiles (Health-style) */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;text-align:left;color:var(--fg);font-weight:400;min-height:120px;min-width:0}
+.tile .tt{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600}
+.tile .tt svg{width:16px;height:16px}
+.tile .tv{font-family:var(--f-display);font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin-top:auto}
+.tile .tv small{font-size:14px;color:var(--muted);font-weight:600;margin-left:2px}
+.tile .ts{font-size:12px;color:var(--muted)}
+.backbtn{align-self:flex-start;color:var(--accent);background:transparent;padding:4px 0;font-weight:500;min-height:36px;display:flex;align-items:center;gap:2px}
+.info-d summary{color:var(--accent);font-size:14px;font-weight:500;list-style:none}
+.info-d summary::-webkit-details-marker{display:none}
+.info-d{border-top:0;padding-top:0}
+.tiles > .tile:last-child:nth-child(odd){grid-column:span 2;min-height:96px}
+.stepcard{display:flex;align-items:center;gap:12px;padding:12px 16px;width:100%;text-align:left;color:var(--fg);font-weight:400;border-radius:var(--r)}
+.shoprow{gap:12px}
+.shoprow .ck{width:24px;height:24px;border-radius:50%;border:2px solid #48484A;flex:none;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.shoprow.done .ck{background:var(--c-veg);border-color:var(--c-veg)}
+.shoprow.done .gt b{text-decoration:line-through;color:var(--muted)}
+.akt{font-style:normal;color:var(--bad);font-weight:600}
+.sheetwrap{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheetbg{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.sheet{position:relative;width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.sheet .f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.pill.bad{color:var(--bad)}
+</style>
+</head>
+<body>
+
+<div id="scroller"><div class="wrap" id="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow" id="hdrDate">Trainingsbuch</div>
+      <h1 id="hdrTitle">Heute</h1>
+    </div>
+    <span class="pill" id="syncPill">Lade Daten …</span>
+  </header>
+  <main id="view" class="wrap" style="max-width:none"></main>
+</div>
+
+</div>
+<nav class="tabs" aria-label="Bereiche">
+  <a href="#heute" data-tab="heute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Heute</a>
+  <a href="#training" data-tab="training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4M21 10v4M6 7v10M18 7v10M6 12h12"/></svg>Training</a>
+  <a href="#fortschritt" data-tab="fortschritt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M6 15l4-4 3 3 5-6"/></svg>Fortschritt</a>
+  <a href="#essen" data-tab="essen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v6M7 3v6M17 21V3c-2 1-3 4-3 7h3"/></svg>Essen</a>
+  <a href="#coach" data-tab="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg>Coach</a>
+</nav>
+
+<script>
+/* ---------- static knowledge ---------- */
+const MUSCLES = ["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden","Bauch","Ganzkörper","Unbekannt"];
+const LIB = [
+ // name, muscle, focus/region, why
+ ["Kurzhantel-Bankdrücken","Brust","Ganze Brust, tiefe Dehnung","Grösserer Bewegungsumfang als mit Langhantel."],
+ ["Schrägbank-Kurzhanteldrücken","Brust","Obere Brust","Schräge Bank (ca. 30°) betont den oberen (klavikulären) Teil."],
+ ["Langhantel-Bankdrücken","Brust","Ganze Brust, Kraft","Gut für schwere Lasten und Kraftmessung."],
+ ["Brustpresse Maschine","Brust","Ganze Brust","Stabil, einfach bis nahe ans Muskelversagen zu trainieren."],
+ ["D106","Brust","Brust, Drückbewegung am Gerät","Gerät in deinem Gym, vor allem Brust."],
+ ["D102","Schultern","Schultern, etwas Brust (Gerät)","Gerät in deinem Gym, vor allem Schultern."],
+ ["Kabel-Flys","Brust","Brust in gedehnter Position","Konstante Spannung, besonders wenn der Muskel gedehnt ist."],
+ ["Butterfly-Maschine","Brust","Brust, Isolation","Wenig Ermüdung für Schultern und Trizeps."],
+ ["Dips","Brust","Untere Brust + Trizeps","Mit vorgeneigtem Oberkörper mehr Brust, aufrecht mehr Trizeps."],
+ ["T-Bar-Rudern","Rücken","Oberer/mittlerer Rücken","Schwer belastbar, breiter Griff mehr oberer Rücken."],
+ ["Einarmiges Kabelrudern","Rücken","Lat + mittlerer Rücken","Ellbogen nah am Körper ziehen betont den Lat."],
+ ["Klimmzüge (assistiert)","Rücken","Lat","Vertikaler Zug, Fortschritt über weniger Unterstützung."],
+ ["Latziehen","Rücken","Lat","Einfach steigerbar, Alternative zu Klimmzügen."],
+ ["Brustgestütztes Rudern","Rücken","Oberer/mittlerer Rücken","Unterer Rücken entlastet, wenig Schummeln möglich."],
+ ["Kabel-Pullover","Rücken","Lat in gedehnter Position","Isoliert den Lat ohne Bizeps."],
+ ["Kurzhantelrudern einarmig","Rücken","Lat + mittlerer Rücken","Grosser Bewegungsumfang."],
+ ["Schulterdrücken Maschine","Schultern","Vordere Schulter","Vordere Schulter wird auch beim Bankdrücken stark belastet."],
+ ["Schulterdrücken Langhantel","Schultern","Vordere Schulter, Kraft","Frei, mehr Stabilisation."],
+ ["Seitheben Kurzhantel","Schultern","Seitliche Schulter","Hauptübung für breitere Schultern."],
+ ["Kabel-Seitheben","Schultern","Seitliche Schulter, gedehnt","Spannung auch unten, wo die Kurzhantel keine gibt."],
+ ["Reverse Butterfly","Schultern","Hintere Schulter","Hintere Schulter kommt bei Ruderzügen oft zu kurz."],
+ ["Face Pulls","Schultern","Hintere Schulter + Rotatoren","Gut für Schultergesundheit und Haltung."],
+ ["Schrägbank-Curls","Bizeps","Langer Kopf, gedehnt","Arm hinter dem Körper dehnt den langen Kopf."],
+ ["Kabel-Curls","Bizeps","Ganzer Bizeps","Konstante Spannung."],
+ ["Hammer-Curls Seil","Bizeps","Brachialis + Brachioradialis","Neutraler Griff trifft die Muskeln unter dem Bizeps und den Unterarm."],
+ ["Scott-Curls (Preacher)","Bizeps","Kurzer Kopf, gedehnt","Arm vor dem Körper betont den kurzen Kopf, schwer am gedehnten Punkt."],
+ ["Bayesian Kabel-Curl","Bizeps","Langer Kopf, gedehnt","Kabel von hinten, Arm hinter dem Körper."],
+ ["Langhantel-Curls","Bizeps","Ganzer Bizeps, Kraft","Gut steigerbar."],
+ ["Überkopf-Trizepsstrecken Seil","Trizeps","Langer Kopf, gedehnt","Arm über dem Kopf dehnt den langen Kopf, der grösste Teil des Trizeps."],
+ ["Trizepsdrücken Seil","Trizeps","Seitlicher + mittlerer Kopf","Arm am Körper, gut gegen Ende des Trainings."],
+ ["Skullcrusher","Trizeps","Langer Kopf","Schwerer belastbar als Kabelvarianten."],
+ ["Enges Bankdrücken","Trizeps","Ganzer Trizeps, Kraft","Schwer, trainiert auch Brust und vordere Schulter."],
+ ["Kniebeuge","Quadrizeps","Quadrizeps + Gesäss","Tief beugen bringt mehr Wachstum im Gesäss und Oberschenkel."],
+ ["Hack-Squat","Quadrizeps","Quadrizeps","Stabil, tiefe Position gut erreichbar."],
+ ["Beinpresse","Quadrizeps","Quadrizeps + Gesäss","Schwer belastbar, wenig Technikanspruch."],
+ ["Bulgarian Split Squat","Quadrizeps","Quadrizeps + Gesäss, einbeinig","Viel Wirkung mit wenig Gewicht."],
+ ["Beinstrecker","Quadrizeps","Rectus femoris (vorne Mitte)","Mit zurückgelehnter Lehne wuchs der Rectus femoris in Studien deutlich mehr."],
+ ["Rumänisches Kreuzheben","Beinbeuger","Beinbeuger + Gesäss, gedehnt","Hüftbeugung mit langer Dehnung."],
+ ["Beinbeuger sitzend","Beinbeuger","Beinbeuger, gedehnt","Sitzend wächst der Beinbeuger mehr als liegend."],
+ ["Beinbeuger liegend","Beinbeuger","Beinbeuger","Alternative, wenn kein Sitzgerät frei ist."],
+ ["Hip Thrust","Gesäss","Gesäss","Belastet das Gesäss stark in der Endposition."],
+ ["Wadenheben stehend","Waden","Wade (Gastrocnemius), gedehnt","Unten in der Dehnung arbeiten bringt am meisten."],
+ ["Wadenheben sitzend","Waden","Wade (Soleus)","Knie gebeugt trifft den tieferen Soleus."],
+ ["Wall Balls","Ganzkörper","Beine + Schultern, Hyrox-Station","Kniebeuge mit Wurf, z. B. 6 oder 9 kg Ball."],
+ ["Rudern (Ergometer)","Ganzkörper","Rücken + Beine, Hyrox-Station","Distanz und Zeit erfassen."],
+ ["SkiErg","Ganzkörper","Lat + Rumpf, Hyrox-Station","Distanz und Zeit erfassen."],
+ ["Kettlebell-Lunges","Ganzkörper","Beine + Gesäss","Ausfallschritte mit Kettlebells."],
+ ["Sandbag-Lunges","Ganzkörper","Beine + Gesäss, Hyrox-Station","Distanz in Metern."],
+ ["Sled Push","Ganzkörper","Beine, Hyrox-Station","Distanz und Gewicht."],
+ ["Sled Pull","Ganzkörper","Rücken + Beine, Hyrox-Station","Distanz und Gewicht."],
+ ["Burpee Broad Jumps","Ganzkörper","Ganzkörper, Hyrox-Station","Distanz in Metern."],
+ ["Farmers Carry","Ganzkörper","Griff + Rumpf, Hyrox-Station","Distanz und Gewicht."],
+ ["Laufen (Hyrox)","Ganzkörper","Ausdauer","Zwischen den Stationen, z. B. 1 km."],
+ ["Kabel-Crunch","Bauch","Gerader Bauch","Gut steigerbar mit Gewicht."],
+ ["Beinheben hängend","Bauch","Unterer Bauch + Hüftbeuger","Gleichzeitig Griffkraft."]
+];
+const LIBMAP = Object.fromEntries(LIB.map(l=>[l[0],{name:l[0],muscle:l[1],focus:l[2],why:l[3]}]));
+const MAIN_MUSCLES = ["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden","Bauch"];
+/* indirectly trained muscles (count 0.5 set each), per Pelland et al. fractional counting */
+const SEC = {
+  "Kurzhantel-Bankdrücken":["Trizeps","Schultern"],"Schrägbank-Kurzhanteldrücken":["Trizeps","Schultern"],"Langhantel-Bankdrücken":["Trizeps","Schultern"],
+  "Brustpresse Maschine":["Trizeps","Schultern"],"Dips":["Trizeps","Schultern"],"Enges Bankdrücken":["Brust","Schultern"],
+  "T-Bar-Rudern":["Bizeps"],"Einarmiges Kabelrudern":["Bizeps"],"Klimmzüge (assistiert)":["Bizeps"],"Latziehen":["Bizeps"],
+  "Brustgestütztes Rudern":["Bizeps"],"Kurzhantelrudern einarmig":["Bizeps"],
+  "Schulterdrücken Maschine":["Trizeps"],"Schulterdrücken Langhantel":["Trizeps"],
+  "Kniebeuge":["Gesäss"],"Hack-Squat":["Gesäss"],"Beinpresse":["Gesäss"],"Bulgarian Split Squat":["Gesäss"],
+  "Rumänisches Kreuzheben":["Gesäss"],"Hip Thrust":["Beinbeuger"],
+  "D102":["Brust","Trizeps"],"D106":["Schultern","Trizeps"]
+};
+const COMPOUND = new Set(["Kurzhantel-Bankdrücken","Schrägbank-Kurzhanteldrücken","Langhantel-Bankdrücken","Brustpresse Maschine","Dips","Enges Bankdrücken","T-Bar-Rudern","Einarmiges Kabelrudern","Klimmzüge (assistiert)","Latziehen","Brustgestütztes Rudern","Kurzhantelrudern einarmig","Schulterdrücken Maschine","Schulterdrücken Langhantel","Kniebeuge","Hack-Squat","Beinpresse","Bulgarian Split Squat","Rumänisches Kreuzheben","Hip Thrust","D102","D106"]);
+const METRIC = {"Rudern (Ergometer)":"dist","SkiErg":"dist","Sandbag-Lunges":"dist","Sled Push":"dist","Sled Pull":"dist","Burpee Broad Jumps":"dist","Farmers Carry":"dist","Laufen (Hyrox)":"dist"};
+const metricOf = e => e.metric || METRIC[e.name] || "reps";
+const isHyroxEx = e => (e.muscle||LIBMAP[e.name]?.muscle)==="Ganzkörper";
+const secOf = e => Array.isArray(e.secondary) ? e.secondary : (SEC[e.name]||[]);
+const isCompound = e => e.compound!=null ? !!e.compound : (COMPOUND.has(e.name) || (SEC[e.name]||[]).length>0 || /drück|press|rudern|zieh|klimm|beuge|squat|kreuzheb|dips/i.test(e.name||""));
+const restFor = e => isCompound(e) ? "2–3 min" : "1,5–2 min";
+function defaultReps(e){ if(/seitheben|wade|face pull|reverse butterfly/i.test(e.name||"")) return "10-15"; if(/bankdrück|t-bar|schulterdrück|kniebeuge|kreuzheb|hack-squat|beinpresse/i.test(e.name||"")) return "5-8"; return isCompound(e)?"6-10":"8-12"; }
+function parseRange(r, comp){ const m=String(r||"").match(/(\d+)\s*[-–]\s*(\d+)/); if(m) return [+m[1],+m[2]]; const one=String(r||"").match(/^\s*(\d+)\s*$/); if(one) return [+one[1],+one[1]]; return comp?[6,10]:[8,12]; }
+function weightStep(e,w){ if(/kurzhantel/i.test(e.name)) return 2; if(/langhantel|t-bar|kniebeuge|kreuzheb|hip thrust|bankdrücken/i.test(e.name)) return 2.5; return Math.max(2.5, Math.round(w*0.05/2.5)*2.5); }
+const fmtKg = v => (Math.round(v*100)/100).toString().replace(".",",");
+/* double progression: reps first, then weight */
+function progression(e){
+  if(metricOf(e)==="dist" || isHyroxEx(e)) return null;
+  const last=lastSetsFor(e.name);
+  const comp=isCompound(e); const [lo,hi]=parseRange(e.reps, comp);
+  if(!last) return {kind:"new", lo, hi, text:`Gewicht wählen, mit dem du ${lo}–${hi} Wdh schaffst (1–2 in Reserve).`};
+  const sets=last.sets.filter(x=>num(x.r)>0);
+  if(!sets.length) return null;
+  const ws=sets.map(x=>num(x.w)||0); const top=Math.max(...ws);
+  const topSets=sets.filter(x=>(num(x.w)||0)===top);
+  const allTop=topSets.length>=Math.min(sets.length,2) && topSets.every(x=>num(x.r)>=hi);
+  const assisted=/assistiert/i.test(e.name);
+  if(top<=0){ return allTop ? {kind:"up", lo, hi, text:`Alle Sätze mit ${hi}+ Wdh geschafft. Zeit für Zusatzgewicht, z. B. 2,5–5 kg.`}
+                            : {kind:"reps", lo, hi, target:sets.map(x=>Math.min(hi,num(x.r)+1)), text:`Eine Wiederholung mehr pro Satz, bis du überall ${hi} schaffst.`}; }
+  if(assisted){ return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-5), text:`Ziel erreicht. Unterstützung um 5 kg verringern: ${fmtKg(Math.max(0,top-5))} kg, dann wieder ab ${lo} Wdh aufbauen.`}
+                              : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,num(x.r)+1)), text:`Gleiche Unterstützung (${fmtKg(top)} kg), eine Wiederholung mehr pro Satz bis ${hi}.`}; }
+  if(allTop){ const nw=top+weightStep(e,top); return {kind:"up", lo, hi, w:nw, text:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
+  return {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,num(x.r)+1)), text:`${fmtKg(top)} kg, pro Satz +1 Wdh (bis ${hi}).`};
+}
+
+/* Evidence base, researched and cross-checked Nov 2026 */
+const EVIDENCE = [
+ {t:"Kalorien von der Uhr", c:"hoch", r:"Uhren schätzen den Kalorienverbrauch ungenau: Über alle Marken lag der mittlere Fehler bei über 30 %, bei Garmin-Modellen je nach Studie etwa −20 % bis +50 %. Der Ruheumsatz aus Profilangaben ist deutlich genauer. Deshalb zeigt die App Kalorien nur zur Orientierung und rechnet nicht damit.", s:[{n:"Germini et al. 2022, J Med Internet Res 24(1):e30791", u:"https://www.jmir.org/2022/1/e30791"}]},
+ {t:"Sätze pro Muskel und Woche", c:"hoch", r:"Mehr Sätze bringen mehr Wachstum, aber jeder weitere Satz bringt weniger. Sinnvoller Bereich: 10–20 Sätze pro Muskel und Woche. Indirekte Sätze zählen halb (Bankdrücken = 1 Satz Brust, 0,5 Satz Trizeps). Für Kraft reichen schon 4–8 Sätze pro Bewegung. Pro Einheit lohnen sich bis etwa 6–10 direkte Sätze für einen Muskel, darüber flacht es ab.", s:[{n:"Pelland et al. 2026, Sports Medicine 56(2):481–505", u:"https://sponet.de/sponet/Record/4097139"},{n:"Preprint mit allen Zahlen (SportRxiv)", u:"https://sportrxiv.org/index.php/server/preprint/view/460"}]},
+ {t:"Jeden Muskel 2× pro Woche", c:"hoch", r:"Bei gleichem Wochenvolumen ist die Frequenz fürs Wachstum fast egal. 2× pro Woche verteilt die Sätze aber besser und hilft der Kraft leicht. Deshalb trifft jede empfohlene Aufteilung jeden Muskel etwa 2×.", s:[{n:"Schoenfeld, Ogborn & Krieger 2016, Sports Medicine 46:1689–1697", u:"https://link.springer.com/10.1007/s40279-016-0543-8"},{n:"Grgic, Schoenfeld & Latella 2019, J Sci Med Sport 22(3)", u:"https://ro.ecu.edu.au/ecuworkspost2013/5665"}]},
+ {t:"Wiederholungen und Nähe zum Versagen", c:"hoch", r:"Muskeln wachsen mit leichten wie schweren Gewichten gleich gut, solange du nah ans Versagen gehst. Für Kraft sind schwerere Gewichte besser. Praxis: Grundübungen 4–8 Wdh mit 1–3 Wdh in Reserve (RIR), Isolationsübungen 8–15 Wdh mit 0–2 RIR. Echtes Muskelversagen bringt kaum mehr.", s:[{n:"Lopez et al. 2021, Med Sci Sports Exerc 53(6):1206–1216", u:"https://ro.ecu.edu.au/ecuworkspost2013/10364"},{n:"Refalo et al. 2024, Sports Medicine (Meta-Analyse Nähe zum Versagen)", u:"https://dro.deakin.edu.au/articles/journal_contribution/Influence_of_Resistance_Training_Proximity-to-Failure_on_Skeletal_Muscle_Hypertrophy_A_Systematic_Review_with_Meta-analysis/22030796"}]},
+ {t:"Satzpausen", c:"mittel", r:"Pausen über 60 s sind fürs Wachstum leicht besser, ab etwa 90 s gibt es keinen Zusatznutzen mehr. Praxis: Isolation 1,5–2 min, schwere Grundübungen 2–3 min, damit das Gewicht gehalten werden kann.", s:[{n:"Singer et al. 2024, Front Sports Act Living 6:1429789", u:"https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2024.1429789/abstract"}]},
+ {t:"Übungen mit Belastung in der Dehnung", c:"mittel", r:"Volle Bewegung mit Betonung der gedehnten Position ist die beste Grundregel. Beispiele aus Studien: Überkopf-Trizepsstrecken baute mehr Trizeps als Pushdowns (langer Kopf +28 % vs. +20 %), sitzender Beinbeuger mehr als liegender (+14 % vs. +9 %), zurückgelehntes Beinstrecken mehr Rectus femoris.", s:[{n:"Maeo et al. 2022/23, Eur J Sport Sci (Trizeps)", u:"https://sci-sport.com/en/triceps-hypertrophy-impact-of-arm-position/"},{n:"Maeo et al. 2021, Med Sci Sports Exerc 53(4) (Beinbeuger)", u:"https://sci-sport.com/en/hypertrophy-and-hamstring-protection-seated-prone-leg-curl/"},{n:"Wolf et al. 2023, Int J Strength Cond 3(1)", u:"https://doaj.org/article/99e86b317bec40f5abc2f0008358737e"}]},
+ {t:"Bizeps: verschiedene Armpositionen", c:"mittel", r:"Schrägbank-Curls (Arm hinter dem Körper) bauten den oberen Bizeps stärker auf, Scott-Curls (Arm vor dem Körper) den unteren. Am besten beide Positionen kombinieren. Hammer-Curls für Brachialis und Unterarm stützen sich nur auf die Anatomie, nicht auf Langzeitstudien.", s:[{n:"Kassiano et al. 2025, Int J Sports Med 46(5):334–343", u:"https://sci-sport.com/en/effects-of-incline-and-preacher-curls-on-regional-hypertrophy-and-strength-266/"}]},
+ {t:"Seitliche Schulter", c:"mittel", r:"Seitheben mit Kurzhantel und Kabel wirkten bei Trainierten gleich gut. Schulterdrücken trifft vor allem die vordere Schulter; für breitere Schultern braucht es Seitheben.", s:[{n:"Larsen et al. 2025, Front Physiol 16:1611468", u:"https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1611468/full"}]},
+ {t:"Beine, Gesäss, Waden", c:"mittel", r:"Tiefe Kniebeugen bauen mehr Quadrizeps, Gesäss und Adduktoren als halbe. Hip Thrust und Kniebeuge brachten ähnlich viel Gesäss, die Kniebeuge zusätzlich Oberschenkel. Bei den Waden wirkte Wadenheben mit Fokus auf die gedehnte Position am besten.", s:[{n:"Plotkin et al. 2023, Front Physiol", u:"https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2023.1279170/full"},{n:"Übersicht Kniebeugen-Tiefe (Stronger by Science)", u:"https://www.strongerbyscience.com/squat-depth/"},{n:"Kassiano et al. 2023, J Strength Cond Res 37(9)", u:"https://read.qxmd.com/read/37015016/"}]},
+ {t:"Steigerung und Deload", c:"mittel", r:"Doppelte Progression: Im Wdh-Bereich (z. B. 8–12) erst die Wiederholungen steigern. Schaffst du in allen Sätzen das obere Ende, erhöhst du das Gewicht um 2–5 %. Eine Woche komplette Pause brachte Trainierten nichts. Wenn Entlastung, dann halbe Sätze mit 3–4 RIR, bei Leistungsabfall oder alle 6–10 Wochen.", s:[{n:"Coleman et al. 2024, PeerJ 12:e16777", u:"https://peerj.com/articles/16777"}]},
+ {t:"Hyrox und Laufen neben Kraft", c:"hoch", r:"Bei moderatem Umfang bremst Ausdauertraining weder Muskelaufbau noch Maximalkraft. Laufen stört mehr als Radfahren, und in derselben Einheit leidet die Schnellkraft. Praxis: Hyrox mindestens 3 h, besser 24 h vom Beintraining trennen. Wenn am selben Tag, Kraft zuerst. 1–2 km Laufband nach dem Krafttraining sind unproblematisch.", s:[{n:"Schumann et al. 2022, Sports Medicine 52:601–612", u:"https://www.fisiologiadelejercicio.com/wp-content/uploads/2022/12/Compatibility-of-Concurrent-Aerobic-and-Strength-Training.pdf"},{n:"Wilson et al. 2012, J Strength Cond Res 26(8):2293–2307", u:"https://search.pedro.org.au/search-results/record-detail/34457"}]},
+ {t:"Fett verlieren und Muskeln aufbauen", c:"mittel", r:"Gleichzeitig Fett verlieren und Muskeln aufbauen geht auch bei Trainierten, mit progressivem Training, viel Protein und genug Schlaf. Abnahmetempo höchstens 0,5–1 % pro Woche, für dich etwa 0,3–0,6 kg. Langsames Abnehmen erhielt in Studien mehr Muskelmasse.", s:[{n:"Barakat et al. 2020, Strength Cond J 42(5):7–21", u:"https://lida.sport-iat.de/ta/Record/4066252?lng=en"},{n:"Helms, Aragon & Fitschen 2014, JISSN 11:20", u:"https://pmc.ncbi.nlm.nih.gov/articles/PMC4033492/"}]},
+ {t:"Protein", c:"hoch", r:"Bis etwa 1,6 g pro kg Körpergewicht steigt der Muskelaufbau, darüber kaum noch (oberer Schätzwert 2,2 g). Beim Abnehmen eher am oberen Ende. Auf 3–5 Mahlzeiten mit je 25–40 g verteilen. Die Tagesmenge ist wichtiger als das genaue Timing.", s:[{n:"Morton et al. 2018, Br J Sports Med 52(6):376", u:"https://bjsm.bmj.com/content/52/6/376.abstract"},{n:"Jäger et al. 2017, ISSN Position Stand Protein", u:"https://exerciseandsportnutritionlab.com/issn-updated-protein-exercise-position-stand-published/"}]},
+ {t:"Essen vor Ausdauer", c:"hoch", r:"Vor Einheiten über 60 min 1–4 g Kohlenhydrate pro kg, 1–4 h vorher, wenig Fett und Ballaststoffe. Dauert es länger als 60 min, 30–60 g Kohlenhydrate pro Stunde während der Belastung.", s:[{n:"Thomas, Erdman & Burke 2016, zitiert in GSSI SSE #231", u:"https://www.gssiweb.org/en/sports-science-exchange/article/dietary-carbohydrate-and-the-endurance-athlete-contemporary-perspectives"}]},
+ {t:"Kreatin", c:"hoch", r:"3–5 g Kreatin-Monohydrat täglich, Zeitpunkt egal. Ohne Ladephase sind die Speicher nach 3–4 Wochen voll. Bei Gesunden langfristig sicher.", s:[{n:"Kreider et al. 2017, ISSN Position Stand", u:"https://exerciseandsportnutritionlab.com/new-issn-position-stand-on-creatine-supplementation/"},{n:"Candow et al. 2022, Front Sports Act Living 4:893714", u:"https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2022.893714/pdf"}]},
+ {t:"Vitamin D, Magnesium, Zink", c:"niedrig", r:"Vitamin D hilft der Kraft am ehesten bei einem Mangel; den Spiegel beim Arzt messen lassen. Für Magnesium und Zink gibt es ohne Mangel kaum Belege für mehr Leistung. Wichtig sind die Obergrenzen der EFSA: Vitamin D 100 µg (4000 IE) pro Tag, Magnesium aus Supplementen 250 mg pro Tag, Zink 25 mg pro Tag insgesamt.", s:[{n:"Zhang, Quan & Cao 2019, PLOS ONE 14(4):e0215826", u:"https://ideas.repec.org/a/plo/pone00/0215826.html"},{n:"EFSA Übersicht Obergrenzen 2024 (PDF)", u:"https://www.efsa.europa.eu/sites/default/files/2024-05/ul-summary-report.pdf"}]},
+ {t:"Schlaf und Training", c:"mittel", r:"Ab 6 Stunden oder weniger Schlaf sinkt die Leistung messbar. Maximalkraft leidet wenig (etwa 3 %), Kraftausdauer und Ausdauer deutlich mehr (etwa 10 %). Je länger du nach einer kurzen Nacht wach bist, desto stärker der Effekt; Abendtraining leidet mehr als Morgentraining. Mehrere kurze Nächte wirken stärker als eine. Eine durchwachte Nacht senkte die Muskelproteinsynthese am Folgetag um 18 %. Für Erwachsene werden mindestens 7 Stunden empfohlen.", s:[{n:"Craven et al. 2022, Sports Medicine (Meta-Analyse, 77 Studien)", u:"https://lida.sport-iat.de/ta/Record/4078085"},{n:"Zusammenfassung Stronger by Science", u:"https://www.strongerbyscience.com/research-spotlight-sleep-loss/"},{n:"Lamon et al. 2021, Physiological Reports", u:"https://acuresearchbank.acu.edu.au/item/8w4w7/the-effect-of-acute-sleep-deprivation-on-skeletal-muscle-protein-synthesis-and-the-hormonal-environment"},{n:"Knowles et al. 2018, J Sci Med Sport (Übersicht Schlaf und Kraft)", u:"https://www.bisp-surf.de/Record/PU201810007708"}]},
+ {t:"Ruhepuls und HRV als Erholungszeichen", c:"niedrig", r:"Ein Ruhepuls deutlich über deinem Normalwert oder eine HRV klar darunter kann auf Müdigkeit, Stress oder einen beginnenden Infekt hindeuten. Die App vergleicht mit deinem eigenen 30-Tage-Schnitt. Feste Grenzwerte sind wissenschaftlich nicht gut belegt; nimm es als Hinweis, nicht als Regel.", s:[]},
+ {t:"Wiedereinstieg nach Krankheit", c:"niedrig", r:"Erst starten, wenn du symptomfrei bist und keine fiebersenkenden Mittel mehr nimmst. Woche 1 etwa 50–60 % der Sätze mit 3–4 RIR und kein Hyrox, Woche 2 etwa 80 %, danach normal. Bei Brustschmerz, starker Atemnot, Schwindel oder ungewöhnlich hohem Puls sofort aufhören und ärztlich abklären lassen. Nach Fieber besonders vorsichtig.", s:[{n:"Snyders et al. 2021, IOC-Konsens, Br J Sports Med", u:"https://www.up.ac.za/Sport-Exercise-Medicine-and-Lifestyle-Institute/news/post_3042925-medical-guidance-for-athletes-returning-to-sport-after-an-acute-respiratory-illness"},{n:"Bird et al. 2022, BJSM Blog", u:"https://blogs.bmj.com/bjsm/?p=10300"}]}
+];
+
+window.SPLITS = {
+ 2:{name:"Ganzkörper A / B", days:"Beide Tage alle grossen Muskeln: je eine Grundübung für Beine, Drücken und Ziehen, dazu Arme und Seitheben als Supersatz.", why:"Mit 2 Tagen trifft nur Ganzkörper jeden Muskel 2×. Etwa 8–10 Sätze pro Muskel und Woche reichen, um Fortschritte zu halten und weiter zu wachsen."},
+ 3:{name:"Ganzkörper A / B / C", days:"A: Kniebeuge, Bankdrücken, Rudern · B: Rumänisches Kreuzheben, Schulterdrücken, Latziehen · C: Beinpresse oder Bulgarian Split Squat, Schrägbank, Klimmzüge · Arme, Seitheben, Waden abwechselnd.", why:"Jeder Muskel 2–3× pro Woche mit 9–12 Sätzen. Hyrox an einem freien Tag, nicht direkt vor einem Tag mit schweren Beinübungen."},
+ 4:{name:"Oberkörper / Unterkörper ×2", days:"Mo Oberkörper · Di Unterkörper · Do Oberkörper · Fr Unterkörper (Beispiel). Hyrox am Wochenende.", why:"Jeder Muskel 2× pro Woche mit 10–16 Sätzen. Hyrox mindestens 24 h vor einem Unterkörpertag."},
+ 5:{name:"Oberkörper / Unterkörper + Push / Pull / Beine", days:"Oberkörper · Unterkörper · Pause oder Hyrox · Push · Pull · Beine.", why:"Jeder Muskel 2×, Arme und Schultern 2–3×. So bleiben deine Push-, Pull- und Beintage erhalten."},
+ 6:{name:"Push / Pull / Beine ×2", days:"Push · Pull · Beine · Push · Pull · Beine. Hyrox ersetzt eine Einheit oder findet mindestens 3 h nach einem Oberkörpertag statt.", why:"Jeder Muskel 2×. Wenn du dich nicht erholst, lieber auf 5 Tage gehen."}
+};
+
+window.NUTRI = function(kg){
+  const lo=Math.round(kg*1.6), hi=Math.round(kg*2.2), cut=Math.round(kg*2.0);
+  const kh1=Math.round(kg*1), kh2=Math.round(kg*2);
+  const ph = (cls,label)=>`<span class="phase ${cls}">${label}</span>`;
+  const step = (cls,label,title,text,ex)=>`<div class="tl-step"><div class="tl-dot ${cls}"></div><div class="tl-body">${ph(cls,label)}<b>${title}</b><p class="small">${text}</p>${ex?`<div class="ex-list">${ex.map(e=>`<span class="food">${e}</span>`).join("")}</div>`:""}</div></div>`;
+  const acc = (color,icon,title,sub,body,open)=>`<details class="acc" style="--acc:var(${color})"${open?" open":""}><summary><span class="acc-ic">${icon}</span><span class="acc-tx"><b>${title}</b><span class="small muted">${sub}</span></span><svg class="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></summary><div class="acc-body">${body}</div></details>`;
+  const I = {
+    kraft:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 10v4M21 10v4M6 7v10M18 7v10M6 12h12"/></svg>',
+    hyrox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+    lauf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2 1 4M11 15l1-5 4 3 3 1M12 10l-4 1-2 3"/></svg>',
+    ruhe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+    pille:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 8.5l5 7"/></svg>'
+  };
+  const plate = [["--c-prot","Protein","1–2 Handflächen","Poulet, Rind, Fisch, Eier, Magerquark, Hüttenkäse, Skyr, Tofu. In jeder Mahlzeit."],
+                 ["--c-veg","Gemüse & Obst","Halber Teller","Macht satt mit wenig Energie."],
+                 ["--c-carb","Kohlenhydrate","1–2 Fäuste","Reis, Kartoffeln, Pasta, Haferflocken, Brot. Mehr an Trainingstagen."],
+                 ["--c-fat","Fett","1 Daumen","Olivenöl, Nüsse, Avocado, Käse."]];
+  const day = (rows)=>`<div class="tablewrap"><table><tbody>${rows.map(r=>`<tr><td class="small muted" style="white-space:nowrap">${r[0]}</td><td>${r[1]}</td><td class="num" style="text-align:right;white-space:nowrap">${r[2]}</td></tr>`).join("")}</tbody></table></div>`;
+  return `<section class="card hero-n">
+    <div class="row between"><h2>Dein Tagesziel</h2><span class="pill">bei ${kg.toFixed(1)} kg</span></div>
+    <div class="grid2">
+      <div class="stat tint" style="--t:var(--c-prot)"><span>Protein pro Tag</span><b>${cut}–${hi}</b><span>g, mindestens ${lo} g</span></div>
+      <div class="stat tint" style="--t:var(--c-carb)"><span>Pro Mahlzeit</span><b>30–40</b><span>g Protein, 4× täglich</span></div>
+      <div class="stat tint" style="--t:var(--c-veg)"><span>Abnahme pro Woche</span><b>0,3–0,6</b><span>kg im Wochenschnitt</span></div>
+    </div>
+    <p class="small muted">Kalorien musst du nicht zählen. Du steuerst über die Portionen unten und das Wochenmittel deines Gewichts.</p>
+  </section>
+
+  <section class="card">
+    <h2>Teller ohne Zählen</h2>
+    <div class="plate-row" aria-hidden="true"><span style="flex:2;background:var(--c-veg)"></span><span style="flex:1;background:var(--c-prot)"></span><span style="flex:.8;background:var(--c-carb)"></span><span style="flex:.3;background:var(--c-fat)"></span></div>
+    <div class="plate-grid">${plate.map(p=>`<div class="pg" style="--t:var(${p[0]})"><span class="pg-dot"></span><div><b>${p[1]}</b><span class="pg-amt">${p[2]}</span><span class="small muted">${p[3]}</span></div></div>`).join("")}</div>
+    <div class="banner" style="border-left-color:var(--c-carb)"><p class="small"><b>Steuern:</b> Sinkt dein Wochenmittel 2 Wochen nicht, lass pro Tag eine Faust Kohlenhydrate oder einen Daumen Fett weg. Sinkt es schneller als 0,6 kg pro Woche, iss etwas mehr.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Essen je nach Trainingsart</h2>
+    <p class="small muted">Was du vor, während und nach dem Training isst. Tippe auf eine Trainingsart.</p>
+    <div class="acc-list">
+    ${acc("--c-kraft",I.kraft,"Krafttraining","Push, Pull, Beine, Arme",
+      step("pre","1–3 h vorher","Normale Mahlzeit","Ca. 35–40 g Protein plus Kohlenhydrate.",["Reis + Poulet + Gemüse","250 g Magerquark + Haferflocken + Banane","Wrap mit Truthahn"])+
+      step("pre2","30–60 min vorher","Nur wenn du wenig Zeit hattest","Etwas Leichtes, nichts Fettiges.",["Banane","Reiswaffeln mit Honig","Joghurt"])+
+      step("post","Innerhalb 1–3 h danach","Mahlzeit mit Protein","30–40 g Protein und Kohlenhydrate.",["Rührei + Brot + Gemüse","Shake + Haferflocken","Pasta mit Hackfleischsauce"])+
+      `<p class="src">Helms 2014; ISSN 2017. Die Tagesmenge zählt mehr als das genaue Timing.</p>`)}
+    ${acc("--c-hyrox",I.hyrox,"Hyrox","Intensiv, oft über 60 min",
+      step("pre","2–3 h vorher","Kohlenhydrate tanken",`Ca. ${kh1}–${kh2} g Kohlenhydrate plus 20–30 g Protein, wenig Fett und Ballaststoffe.`,["Grosse Portion Pasta oder Reis + mageres Fleisch","Weissbrot mit Honig","Banane"])+
+      step("during","Während (über 60 min)","Nachtanken","30–60 g Kohlenhydrate pro Stunde. Unter 60 min reicht Wasser.",["Sportgetränk","Gel","Banane"])+
+      step("post","Danach","Auffüllen","Protein und viele Kohlenhydrate, besonders wenn am nächsten Tag Training ist.",["Reis + Lachs","Kartoffeln + Rind","Skyr + Müesli + Früchte"])+
+      `<p class="src">1–4 g Kohlenhydrate pro kg, 1–4 h vorher (Thomas, Erdman &amp; Burke 2016).</p>`)}
+    ${acc("--c-lauf",I.lauf,"Laufen","Kurz, lang oder Laufband nach Kraft",
+      step("pre","Unter 45 min","Keine Extra-Mahlzeit","Normal essen. Läufst du direkt nach dem Krafttraining, reicht die Mahlzeit davor.",null)+
+      step("pre2","Über 60 min, 2–3 h vorher","Wie bei Hyrox","Kohlenhydratreich, wenig Fett.",["Toast + Konfitüre","Haferbrei + Banane"])+
+      step("post","Danach","Normale Mahlzeit","Mit 30–40 g Protein.",["Poulet-Bowl","Omelett + Brot"]))}
+    ${acc("--c-veg",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="10" cy="9" rx="6" ry="6.5"/><path d="M13.8 13.8L20 20M7.5 7h.01M10 9.5h.01M12.5 7h.01M7.5 11.5h.01M12.5 11.5h.01"/></svg>',"Padel","Intervalle, meist 60–90 min",
+      step("pre","2–3 h vorher","Kohlenhydrate + Protein",`Ca. ${kh1}–${Math.round(kg*1.5)} g Kohlenhydrate plus 20–30 g Protein, wenig Fett und Ballaststoffe.`,["Reis oder Pasta + Poulet","Sandwich mit Truthahn + Banane","Haferbrei + Früchte"])+
+      step("pre2","30–60 min vorher","Kleiner Snack","Nur wenn die letzte Mahlzeit länger her ist.",["Banane","Reiswaffeln mit Honig"])+
+      step("during","Während","Trinken","Regelmässig Wasser. Spielst du länger als 60 min oder direkt nach dem Gym, 30–60 g Kohlenhydrate pro Stunde.",["Sportgetränk","Banane in der Pause"])+
+      step("post","Danach","Protein, leicht verdaulich","30–40 g Protein. Spät am Abend lieber etwas Leichtes, damit du gut schläfst.",["Magerquark + Haferflocken","Skyr + Banane","Shake + Toast"])+
+      `<p class="src">Kohlenhydrate vor und während Belastungen über 60 min: Thomas, Erdman &amp; Burke 2016.</p>`)}
+    ${acc("--c-ruhe",I.ruhe,"Ruhetag","Kein Training",
+      step("pre","Den ganzen Tag","Protein bleibt gleich","Auch an Ruhetagen 4× 30–40 g Protein, denn der Muskel baut jetzt auf.",null)+
+      step("pre2","Weniger","Kohlenhydrate eher 1 Faust","Dafür mehr Gemüse.",["Grosser Salat + Thunfisch","Gemüsepfanne + Tofu oder Poulet"]))}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Beispieltage</h2>
+    <div class="acc-list">
+    ${acc("--c-kraft",I.kraft,"Krafttag","≈ 165 g Protein",day([["Frühstück","3 Eier, 2 Scheiben Brot, Obst","≈ 25 g"],["Mittag","Reis, 150–200 g Poulet, Salat","≈ 40 g"],["Vor Training","250 g Magerquark, Haferflocken, Banane","≈ 35 g"],["Abend","Kartoffeln, Lachs oder Rind, Gemüse","≈ 40 g"],["Spät","Skyr oder Hüttenkäse","≈ 25 g"]]))}
+    ${acc("--c-hyrox",I.hyrox,"Hyrox-Tag","Mehr Kohlenhydrate",day([["Frühstück","Haferbrei mit Milch, Banane, Honig","≈ 20 g"],["Mittag (3 h vorher)","Grosse Portion Pasta, Pouletbrust","≈ 40 g"],["Während","Sportgetränk","—"],["Danach","Reis, Lachs, Gemüse","≈ 40 g"],["Abends","Skyr mit Müesli und Früchten","≈ 30 g"]]))}
+    ${acc("--c-ruhe",I.ruhe,"Ruhetag","Weniger Kohlenhydrate",day([["Frühstück","Rührei, 1 Scheibe Brot, Tomaten","≈ 25 g"],["Mittag","Grosser Salat mit Thunfisch und Bohnen","≈ 40 g"],["Zvieri","Hüttenkäse mit Gurke","≈ 25 g"],["Abend","Gemüsepfanne mit Rind","≈ 40 g"],["Spät","Magerquark","≈ 30 g"]]))}
+    </div>
+    <p class="small muted">Rezepte aus dem, was du zu Hause hast: einfach Claude im Chat fragen.</p>
+  </section>
+
+  <section class="card">
+    <div class="acc-list">
+    ${acc("--c-fat",I.pille,"Deine Supplements","Menge und beste Einnahmezeit",
+      `<div class="supp-day">
+        <div class="sd" style="--t:var(--c-carb)"><span class="phase pre">Mittag</span><b>Vitamin D + Kreatin</b><span class="small muted">Zur grössten Mahlzeit, mit etwas Fett</span></div>
+        <div class="sd" style="--t:var(--c-ruhe)"><span class="phase" style="background:var(--c-ruhe)">Abend</span><b>Magnesium + Zink</b><span class="small muted">Mit Essen, nicht auf nüchternen Magen</span></div>
+      </div>
+      ${[
+        ["Kreatin","--c-kraft","3–5 g täglich, jeden Tag, auch an Ruhetagen.","Uhrzeit ist egal, wichtig ist die tägliche Einnahme. Vor oder nach dem Training macht laut Studien keinen klaren Unterschied. Am einfachsten zu einer Mahlzeit mit Kohlenhydraten und Protein, das kann die Aufnahme leicht verbessern.","stark","good"],
+        ["Vitamin D","--c-carb","Im Winter üblich 20–50 µg (800–2000 IE). Obergrenze 100 µg (4000 IE).","Fettlöslich, also immer zu einer Mahlzeit nehmen. In einer Studie stieg der Blutspiegel um etwa 50 %, wenn es zur grössten Mahlzeit des Tages genommen wurde. Spiegel beim Arzt messen lassen.","bei Mangel","warn"],
+        ["Magnesium","--c-ruhe","Höchstens 250 mg pro Tag aus Supplementen.","Am besten abends zum Essen. Mit Essen ist es besser verträglich (weniger Durchfall). Dass es den Schlaf verbessert, ist nicht gut belegt, schadet aber nicht.","schwach",""],
+        ["Zink","--c-lauf","Höchstens 25 mg pro Tag insgesamt, Supplement also 10–15 mg.","Wird nüchtern etwas besser aufgenommen, macht dann aber oft Übelkeit. Deshalb zu einer Mahlzeit. Nicht gleichzeitig mit Eisen- oder Kalziumpräparaten nehmen, das bremst die Aufnahme. Nicht dauerhaft hoch dosieren.","schwach",""]
+      ].map(r=>`<div class="supp" style="--t:var(${r[1]})"><div class="row between"><b>${r[0]}</b><span class="pill ${r[5]}">Belege: ${r[4]}</span></div><p class="small"><b>Menge:</b> ${r[2]}</p><p class="small"><b>Wann:</b> ${r[3]}</p></div>`).join("")}
+      <p class="src">Kreatin: Candow et al. 2022, Front Sports Act Living; ISSN 2017. Vitamin D: Mulligan &amp; Licata 2010, J Bone Miner Res. Zink: NIH Office of Dietary Supplements. Obergrenzen: EFSA 2024.</p>
+      <p class="small muted">Prüf die Menge auf deinen Packungen. Bei Unsicherheit: Apotheke oder Hausarzt.</p>`)}
+    </div>
+  </section>`;
+};
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const scrollTop = () => { const sc=document.getElementById("scroller"); if(sc) sc.scrollTop=0; else window.scrollTo(0,0); };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const fmtDate = s => { if(!s) return ""; const d=new Date(s+"T12:00:00"); return d.toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"}); };
+const isoWeek = (s) => { const d=new Date((s||todayStr())+"T12:00:00"); const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const day=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-day); const y=new Date(Date.UTC(t.getUTCFullYear(),0,1)); const w=Math.ceil(((t-y)/86400000+1)/7); return t.getUTCFullYear()+"-W"+String(w).padStart(2,"0"); };
+const daysAgo = n => { const d=new Date(); d.setDate(d.getDate()-n); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const e1rm = (w,r) => (w>0&&r>0) ? w*(1+r/30) : 0;
+const num = v => { const n=parseFloat(String(v).replace(",",".")); return isNaN(n)?null:n; };
+const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+function lsGet(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let draftMem; try{ draftMem = JSON.parse(localStorage.getItem("tb_draft")||"null"); }catch(e){ draftMem=null; }
+const getDraft = () => draftMem ? JSON.parse(JSON.stringify(draftMem)) : null;
+function setDraft(d){ draftMem = d ? JSON.parse(JSON.stringify(d)) : null; try{ if(d) localStorage.setItem("tb_draft",JSON.stringify(d)); else localStorage.removeItem("tb_draft"); }catch(e){} }
+
+/* ===== Offline-first Speicher + GitHub-Sync (wie To-Do-App) =====
+   Alle Daten liegen lokal (localStorage) und in data.json im privaten Repo.
+   Pro Dokument gewinnt der neuere Zeitstempel (_u). Gelöscht = _del:true. */
+const LDB = (() => {
+  const DKEY="tb.data", SKEY="tb.settings", YKEY="tb.sync", TTL=30*864e5;
+  const now=()=>Date.now();
+  const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}};
+  let docs = ls.get(DKEY,{});            // path -> {...felder, _u, _del?}
+  let settings = Object.assign({owner:"",repo:"training-data",path:"data.json",token:""}, ls.get(SKEY,{}));
+  const sync = Object.assign({lastSync:0,dirty:false}, ls.get(YKEY,{}), {status:"idle",error:""});
+  const colL=[], docL=[]; let seq=0;
+  const persist=()=>{ if(!ls.set(DKEY,docs)) toast("Speicher auf dem Gerät voll"); };
+  const saveSync=()=>ls.set(YKEY,{lastSync:sync.lastSync,dirty:sync.dirty});
+  const clean=o=>{ const c={...o}; delete c._u; delete c._del; return c; };
+  const live=p=>docs[p] && !docs[p]._del;
+  function colSnap(l){
+    const pre=l.name+"/";
+    let arr=Object.keys(docs).filter(p=>p.startsWith(pre) && p.indexOf("/",pre.length)<0 && live(p)).map(p=>({id:p.slice(pre.length), obj:docs[p]}));
+    if(l.order){ const [f,dir]=l.order; arr.sort((a,b)=>{ const x=a.obj[f], y=b.obj[f]; return (x<y?-1:x>y?1:0)*(dir==="desc"?-1:1); }); }
+    if(l.limit) arr=arr.slice(0,l.limit);
+    return {docs:arr.map(d=>({id:d.id, data:()=>clean(d.obj)})), metadata:{fromCache:false}};
+  }
+  const docSnap=p=>({id:p.split("/").pop(), exists:live(p), data:()=>live(p)?clean(docs[p]):undefined});
+  function emit(){ colL.forEach(l=>{ try{l.cb(colSnap(l));}catch(e){console.error(e);} }); docL.forEach(l=>{ try{l.cb(docSnap(l.path));}catch(e){console.error(e);} }); }
+  let emitT=null; const emitSoon=()=>{ clearTimeout(emitT); emitT=setTimeout(emit,0); };
+  function write(path, obj){ docs[path]=obj; seq++; persist(); sync.dirty=true; saveSync(); emitSoon(); scheduleSync(1500); }
+  function query(name, order, limit){
+    return { orderBy:(f,dir)=>query(name,[f,dir||"asc"],limit), limit:n=>query(name,order,n),
+      onSnapshot:(cb)=>{ const l={name,order,limit,cb}; colL.push(l); setTimeout(()=>cb(colSnap(l)),0); return ()=>colL.splice(colL.indexOf(l),1); } };
+  }
+  const db = {
+    collection:name=>query(name,null,null),
+    doc:path=>({
+      onSnapshot:(cb)=>{ const l={path,cb}; docL.push(l); setTimeout(()=>cb(docSnap(path)),0); return ()=>docL.splice(docL.indexOf(l),1); },
+      set:async data=>write(path,{...data,_u:now()}),
+      update:async data=>write(path,{...(live(path)?docs[path]:{}),...data,_u:now(),_del:undefined}),
+      delete:async()=>write(path,{_del:true,_u:now()})
+    })
+  };
+  /* --- Sync --- */
+  const configured=()=>!!(settings.owner&&settings.repo&&settings.path&&settings.token);
+  let timer=null, syncing=false, again=false;
+  function scheduleSync(ms){ clearTimeout(timer); timer=setTimeout(runSync,ms); }
+  function merge(a,b){
+    const out={}, cut=now()-TTL;
+    for(const src of [a,b]) for(const [p,o] of Object.entries(src||{})){ if(!o) continue; const cur=out[p]; if(!cur || (o._u||0)>(cur._u||0)) out[p]=o; }
+    for(const p of Object.keys(out)){ if(out[p]._del && (out[p]._u||0)<cut) delete out[p]; else if(out[p]._del===undefined) delete out[p]._del; }
+    return out;
+  }
+  function serialize(d){ const o={}; Object.keys(d).sort().forEach(k=>o[k]=d[k]); return JSON.stringify({schema:1,docs:o},null,1)+"\n"; }
+  const b64e=s=>{ const by=new TextEncoder().encode(s); let bin=""; for(let i=0;i<by.length;i+=0x8000) bin+=String.fromCharCode.apply(null,by.subarray(i,i+0x8000)); return btoa(bin); };
+  const b64d=b=>{ const bin=atob(b.replace(/\s/g,"")); const by=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) by[i]=bin.charCodeAt(i); return new TextDecoder().decode(by); };
+  const api=()=>`https://api.github.com/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}/contents/${settings.path.split("/").map(encodeURIComponent).join("/")}`;
+  const H=()=>({Authorization:`Bearer ${settings.token}`,Accept:"application/vnd.github+json"});
+  async function errText(r){ let m=""; try{m=(await r.json()).message||"";}catch(e){} if(r.status===401) return "Token ungültig oder abgelaufen (401)."; if(r.status===403) return "Keine Berechtigung (403). Token braucht «Contents: Read and write» für training-data."; if(r.status===404) return "Repo nicht gefunden (404). Benutzername/Repo prüfen."; return `GitHub ${r.status}: ${m}`; }
+  async function fetchRemote(){
+    const r=await fetch(api()+"?t="+now(),{cache:"no-store",headers:H()});
+    if(r.status===404){ const r2=await fetch(`https://api.github.com/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}`,{cache:"no-store",headers:H()}); if(!r2.ok) throw new Error(await errText(r2)); return {data:{},sha:null}; }
+    if(!r.ok) throw new Error(await errText(r));
+    const j=await r.json(); let text=j.content?b64d(j.content):"";
+    if(!j.content && j.size>0 && j.git_url){ const b=await fetch(j.git_url,{cache:"no-store",headers:H()}); text=b64d((await b.json()).content); }
+    let d; try{ d=text.trim()?JSON.parse(text):{}; }catch(e){ throw new Error("data.json ist kein gültiges JSON."); }
+    return {data:d.docs||{}, sha:j.sha};
+  }
+  async function runSync(){
+    if(!configured()){ onStatus(); return; }
+    if(!navigator.onLine){ sync.status="offline"; onStatus(); return; }
+    if(syncing){ again=true; return; }
+    syncing=true; sync.status="syncing"; onStatus();
+    const s0=seq;
+    try{
+      let ok=false;
+      for(let a=0;a<4&&!ok;a++){
+        const {data:remote,sha}=await fetchRemote();
+        const merged=merge(docs,remote); const out=serialize(merged);
+        if(!sha || out!==serialize(remote)){
+          const body={message:"Trainingsbuch: Update",content:b64e(out)}; if(sha) body.sha=sha;
+          const r=await fetch(api(),{method:"PUT",headers:{...H(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+          if(r.status===409||r.status===422){ await new Promise(x=>setTimeout(x,400*(a+1))); continue; }
+          if(!r.ok) throw new Error(await errText(r));
+        }
+        const changed = JSON.stringify(merged)!==JSON.stringify(docs);
+        docs=merge(docs,merged); persist(); if(changed) emitSoon();
+        ok=true;
+      }
+      if(!ok) throw new Error("Konflikt beim Speichern – bitte nochmals versuchen.");
+      sync.lastSync=now(); sync.status="ok"; sync.error=""; sync.dirty=(seq!==s0); saveSync();
+    }catch(e){
+      sync.error=e&&e.message?e.message:String(e);
+      sync.status=(!navigator.onLine||/Failed to fetch|NetworkError|Load failed/i.test(sync.error))?"offline":"error";
+    }finally{
+      syncing=false; onStatus();
+      if(again||(sync.dirty&&sync.status==="ok")){ again=false; scheduleSync(800); }
+    }
+  }
+  let onStatus=()=>{};
+  window.addEventListener("online",()=>runSync());
+  window.addEventListener("offline",()=>{ sync.status="offline"; onStatus(); });
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") runSync(); });
+  setInterval(()=>{ if(document.visibilityState==="visible") runSync(); },60000);
+  return { db, sync, configured, runSync,
+    get settings(){ return settings; },
+    setSettings(s){ settings=Object.assign(settings,s); ls.set(SKEY,settings); sync.status="idle"; sync.error=""; runSync(); },
+    onStatus(fn){ onStatus=fn; },
+    exportJSON(){ return serialize(docs); },
+    importDocs(d){ docs=merge(docs,d); seq++; persist(); sync.dirty=true; saveSync(); emit(); scheduleSync(300); },
+    count(){ return Object.keys(docs).filter(live).length; } };
+})();
+
+/* ---------- state + store ---------- */
+const S = { shop:null, sleep:[], runs:[], plans:[], logs:[], bw:[], garmin:[], weeks:{}, coach:null, profile:null, ready:false, db:null, offline:false };
+const DEFAULT_PROFILE = { startDate:"2026-11-07", unlockDate:"2026-11-15" };
+const prof = () => Object.assign({}, DEFAULT_PROFILE, S.profile||{});
+const unlocked = () => todayStr() >= prof().unlockDate;
+
+const writeQ = {};
+async function save(path, data, mode="set"){
+  if(!S.db){ toast("Keine Verbindung zum Speicher"); return false; }
+  const prev = writeQ[path] || Promise.resolve();
+  const p = prev.catch(()=>{}).then(()=> mode==="delete" ? S.db.doc(path).delete() : S.db.doc(path)[mode](data));
+  writeQ[path]=p;
+  try{ await p; return true; }catch(e){ toast(e.code==="quota_exceeded"?"Speicher voll":"Speichern fehlgeschlagen"); return false; }
+}
+
+async function boot(){
+  render();
+  const db=LDB.db; S.db=db; S.ready=true; S.offline=false;
+  LDB.onStatus(setPill); setPill();
+  const done=()=>{}; const err=e=>console.error(e);
+  db.collection("plans").onSnapshot(s=>{ S.plans=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??99)-(b.order??99)); if(!s.metadata.fromCache) done(); render(); }, err);
+  db.collection("logs").orderBy("date","desc").limit(600).onSnapshot(s=>{ S.logs=s.docs.map(d=>({id:d.id,...d.data()})); render(); }, err);
+  db.collection("bodyweight").orderBy("date","asc").limit(1000).onSnapshot(s=>{ S.bw=s.docs.map(d=>d.data()); render(); }, err);
+  db.collection("garmin").orderBy("date","desc").limit(120).onSnapshot(s=>{ S.garmin=s.docs.map(d=>d.data()); setPill(); render(); }, err);
+  db.collection("weeks").onSnapshot(s=>{ S.weeks=Object.fromEntries(s.docs.map(d=>[d.id,d.data()])); render(); }, err);
+  db.doc("coach/current").onSnapshot(d=>{ S.coach=d.exists?d.data():null; render(); }, err);
+  db.collection("sleep").orderBy("date","desc").limit(400).onSnapshot(s=>{ S.sleep=s.docs.map(d=>d.data()); render(); }, err);
+  db.doc("shopping/current").onSnapshot(d=>{ S.shop=d.exists?d.data():null; render(); }, err);
+  db.doc("pantry/current").onSnapshot(d=>{ S.pantry=d.exists?d.data():null; render(); }, err);
+  db.doc("nutrition/foods").onSnapshot(d=>{ S.foods=d.exists?d.data():null; render(); }, err);
+  db.collection("runs").orderBy("date","desc").limit(300).onSnapshot(s=>{ S.runs=s.docs.map(d=>({id:d.id,...d.data()})); render(); }, err);
+  db.doc("settings/profile").onSnapshot(d=>{ S.profile=d.exists?d.data():null; render(); }, err);
+  if(!LDB.configured()) setTimeout(()=>{ if(!LDB.count()) syncSheet(); },400);
+  LDB.runSync();
+  if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+}
+function lastSyncTxt(){
+  const ts=(S.garmin||[]).map(g=>g.syncedAt).filter(Boolean).map(t=>new Date(t)).filter(d=>!isNaN(d)).sort((a,b)=>b-a)[0];
+  if(!ts) return "";
+  const hm=ts.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"});
+  const same=ts.toDateString()===new Date().toDateString();
+  const lbl=same?hm:ts.toLocaleDateString("de-CH",{weekday:"short"})+" "+hm;
+  return `<span style="color:var(--muted);font-weight:400;margin-left:6px">· Garmin ${lbl}</span>`;
+}
+function setPill(){
+  const p=$("#syncPill"); if(!p) return;
+  const y=LDB.sync; let cls="good", dot="var(--good)", txt="Synchron";
+  if(!LDB.configured()){ cls="warn"; dot="var(--warn)"; txt="Nur lokal"; }
+  else if(y.status==="syncing"){ cls="good"; dot="var(--accent)"; txt="Sync …"; }
+  else if(y.status==="error"){ cls="bad"; dot="var(--bad)"; txt="Sync-Fehler"; }
+  else if(!navigator.onLine||y.status==="offline"){ cls="warn"; dot="var(--warn)"; txt="Offline"; }
+  else if(y.dirty){ cls="warn"; dot="var(--warn)"; txt="Ausstehend"; }
+  p.className="pill "+cls; p.style.cursor="pointer";
+  p.innerHTML=`<span class="plate" style="background:${dot}"></span>${txt}`+lastSyncTxt();
+  p.onclick=syncSheet;
+}
+function syncSheet(){
+  const st=LDB.settings, y=LDB.sync;
+  const last=y.lastSync?new Date(y.lastSync).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"}):"noch nie";
+  const status=!LDB.configured()?"Nur auf diesem Gerät gespeichert. Trag GitHub-Benutzername und Token ein, damit alles synchronisiert wird.":y.status==="error"?y.error:y.status==="offline"?"Offline – Änderungen werden gespeichert und später hochgeladen.":`Zuletzt synchronisiert ${last}${y.dirty?" · Änderungen ausstehend":""}`;
+  let w=document.getElementById("syncSheet"); if(w) w.remove();
+  w=document.createElement("div"); w.id="syncSheet"; w.className="sheetwrap";
+  w.innerHTML=`<div class="sheetbg"></div><div class="sheet"><div class="row between"><h2>Synchronisation</h2><button class="tiny ghost" data-x>Schliessen</button></div>
+    <p class="small ${y.status==="error"?"":"muted"}" style="${y.status==="error"?"color:var(--bad)":""}">${esc(status)}</p>
+    <label class="f">GitHub-Benutzername<input id="sy_owner" value="${esc(st.owner)}" autocapitalize="off" spellcheck="false" placeholder="z. B. FahrniLuca"></label>
+    <label class="f">Daten-Repo<input id="sy_repo" value="${esc(st.repo)}" autocapitalize="off" spellcheck="false"></label>
+    <label class="f">Token<input id="sy_token" type="password" value="${esc(st.token)}" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
+    <button class="primary" data-save style="margin-top:6px">Speichern &amp; synchronisieren</button>
+    <button data-now style="margin-top:8px">Jetzt synchronisieren</button>
+    <p class="small muted" style="margin-top:10px">${LDB.count()} Einträge auf diesem Gerät. Daten liegen offline auf dem Handy und in data.json im privaten Repo.</p>
+  </div>`;
+  document.body.appendChild(w);
+  const close=()=>w.remove();
+  w.querySelector(".sheetbg").onclick=close; w.querySelector("[data-x]").onclick=close;
+  w.querySelector("[data-save]").onclick=()=>{ LDB.setSettings({owner:w.querySelector("#sy_owner").value.trim(),repo:w.querySelector("#sy_repo").value.trim()||"training-data",token:w.querySelector("#sy_token").value.trim()}); close(); toast("Gespeichert – synchronisiere …"); };
+  w.querySelector("[data-now]").onclick=()=>{ close(); LDB.runSync(); };
+}
+
+/* ---------- routing ---------- */
+const TABS = {heute:"Heute", training:"Training", fortschritt:"Fortschritt", essen:"Ernährung", coach:"Coach"};
+const OLD_HASH = {plaene:"training", laufen:"fortschritt", koerper:"fortschritt"};
+let tab = "heute";
+let ui = lsGet("tb_ui", {progEx:null, editPlan:null});
+function route(){ let h=location.hash.slice(1); if(OLD_HASH[h]) h=OLD_HASH[h]; tab = TABS[h] ? h : "heute"; render(); scrollTop(); }
+window.addEventListener("hashchange", route);
+
+let rendering=false, pendingRender=false;
+function render(){
+  if(rendering){ pendingRender=true; return; }
+  rendering=true;
+  const active=document.activeElement;
+  const keepId = active && active.id && $("#view").contains(active) ? active.id : null;
+  if(keepId){ rendering=false; pendingRender=true; scheduleIdle(); return; } // don't clobber typing
+  document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.tab===tab?"page":"false"));
+  $("#hdrTitle").textContent = TABS[tab];
+  $("#hdrDate").textContent = new Date().toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"});
+  const v=$("#view");
+  v.innerHTML = ({heute:vToday, training:vTraining, fortschritt:vProgress, essen:vEssen, coach:vCoach}[tab])();
+  bind();
+  rendering=false;
+}
+let idleT=null;
+function scheduleIdle(){ clearTimeout(idleT); idleT=setTimeout(()=>{ if(pendingRender){ const a=document.activeElement; if(a && a.id && $("#view").contains(a)) { scheduleIdle(); return; } pendingRender=false; render(); } }, 1500); }
+document.addEventListener("focusout", ()=>{ if(pendingRender) scheduleIdle(); });
+
+/* ---------- derived ---------- */
+function lastSetsFor(name){
+  for(const l of S.logs){ const e=(l.entries||[]).find(x=>x.name===name); if(e && e.sets && e.sets.length) return {date:l.date, sets:e.sets}; }
+  return null;
+}
+function setsPerMuscle(fromDate){
+  const out={};
+  for(const l of S.logs){ if(l.date<fromDate) continue; for(const e of (l.entries||[])){ const m=e.muscle||LIBMAP[e.name]?.muscle||"Unbekannt"; const n=(e.sets||[]).filter(s=>num(s.r)>0).length; out[m]=(out[m]||0)+n; for(const sm of secOf(e)){ if(sm!==m) out[sm]=(out[sm]||0)+n*0.5; } } }
+  return out;
+}
+function bwSorted(){ return [...S.bw].filter(x=>x.kg).sort((a,b)=>a.date<b.date?-1:1); }
+
+/* ---------- views ---------- */
+function weekBanner(){
+  if(unlocked()) return "";
+  const left = Math.max(0, Math.round((new Date(prof().unlockDate+"T00:00:00") - new Date())/86400000));
+  const legs = S.plans.find(p=>/bein/i.test(p.name));
+  const legsEmpty = legs && !(legs.exercises||[]).length;
+  return `<div class="banner"><div class="eyebrow">Erfassungswoche · noch ${left} ${left===1?"Tag":"Tage"}</div>
+  <p>Diese Woche sammelst du nur Daten, Vorschläge gibt es ab ${fmtDate(prof().unlockDate)}.</p>
+  <p class="small muted">${legsEmpty?"Noch offen: Beinübungen eintragen · ":""}Bei jedem Training Gewichte und Wiederholungen eintragen</p></div>`;
+}
+
+function vTrainStart(){
+  const recent = S.logs.slice(0,6);
+  const wk = isoWeek();
+  const wkLogs = S.logs.filter(l=>isoWeek(l.date)===wk);
+  const plan = S.weeks[wk];
+  const sick = todayStr() < "2026-11-22" ? `<details class="card" style="padding-top:12px"><summary>Wiedereinstieg nach der Krankheit</summary><div><p class="small">Woche 1: etwa die Hälfte der Sätze, 3–4 Wiederholungen in Reserve, noch kein Hyrox. Woche 2: etwa 80 %. Danach normal.</p><p class="small">Sofort aufhören und ärztlich abklären bei Brustschmerz, starker Atemnot, Schwindel oder ungewöhnlich hohem Puls.</p></div></details>` : "";
+  return `${weekBanner()}
+  <section class="card">
+    <div class="row between"><h2>Training starten</h2><span class="pill acc">Woche ${wk.slice(-2)} · ${wkLogs.length}${plan&&plan.days?" / "+plan.days:""} Einheiten</span></div>
+    ${S.plans.length? `<div class="grid2">${S.plans.map(p=>`<button data-act="start" data-id="${esc(p.id)}" style="text-align:left;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:600;color:var(--fg)">${esc(p.name)}</span><span class="small muted" style="font-weight:400">${p.kind==="cardio"?"Ausdauer":p.kind==="hyrox"?"Hyrox · "+(p.exercises||[]).length+" Stationen":(p.exercises||[]).length+" Übungen"}</span></button>`).join("")}</div>`
+      : `<p class="muted">${S.ready?"Noch keine Pläne. Lege unter „Pläne“ den ersten an.":"Pläne werden geladen …"}</p>`}
+    <button class="ghost" data-act="start" data-id="">Freies Training ohne Plan</button>
+  </section>
+  ${dayCard()}
+  <section class="card">
+    <h2>Gespeicherte Trainings</h2>
+    ${recent.length? `<div class="list">${recent.map(l=>`<div class="li"><div class="t"><b>${esc(l.planName||"Training")}</b><span class="small muted">${fmtDate(l.date)} · ${(l.entries||[]).length} Übungen · ${(l.entries||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} Sätze${l.durationMin?" · "+l.durationMin+" min":""}</span></div><button class="tiny ghost" data-act="dellog" data-id="${esc(l.id)}" aria-label="Einheit löschen">Löschen</button></div>`).join("")}</div>`
+      : `<p class="muted">Hier erscheinen deine Einheiten, sobald du das erste Training speicherst.</p>`}
+  </section>${sick}`;
+}
+
+function vDraft(d){
+  const cardio = d.kind==="cardio";
+  return `<section class="card">
+    <div class="row between"><div><div class="eyebrow">${fmtDate(d.date)}</div><h2>${esc(d.planName||"Freies Training")}</h2></div>
+    <button data-act="cancel">Abbrechen</button></div>
+    <label class="f">Datum<input type="date" id="d_date" value="${esc(d.date)}"></label>
+    <p class="small muted">Dauer und Puls kommen über Garmin.</p>
+    ${cardio?`<label class="f">Was hast du gemacht?<textarea id="d_note" rows="3" placeholder="z. B. 5 km locker, Hyrox-Workout mit Wall Balls und Rudern">${esc(d.note||"")}</textarea></label><p class="small muted">Puls, Pace und Distanz kommen über Garmin dazu.</p>`:""}
+  </section>
+  ${cardio?"":d.entries.map((e,i)=>exCard(e,i)).join("")}
+  ${cardio?"":`<section class="card"><div class="row"><select id="d_addsel" aria-label="Übung hinzufügen"><option value="">Übung hinzufügen …</option>${MUSCLES.map(m=>`<optgroup label="${m}">${LIB.filter(l=>l[1]===m).map(l=>`<option>${esc(l[0])}</option>`).join("")}</optgroup>`).join("")}</select><button data-act="addex">Hinzufügen</button></div>
+  <label class="f">Notiz<textarea id="d_note" rows="2" placeholder="Wie lief's? Schmerzen, Schlaf, Energie …">${esc(d.note||"")}</textarea></label></section>`}
+  <button class="primary" data-act="finish" style="min-height:52px">Training speichern</button>
+  <button class="ghost" data-act="cancel">Abbrechen ohne Speichern</button>`;
+}
+function exCard(e,i){
+  const last = lastSetsFor(e.name);
+  const dist = metricOf(e)==="dist";
+  const lastTxt = last ? last.sets.map(s=> dist ? `${s.m||"–"} m${s.t?" in "+s.t:""}${s.w?" @ "+s.w+" kg":""}` : `${s.w||"–"}×${s.r||"–"}`).join(" · ") : "";
+  const pg = progression(e);
+  const phW = j => pg && pg.w!=null ? fmtKg(pg.w).replace(",",".") : (last&&last.sets[j]?last.sets[j].w:"");
+  const phR = j => pg && pg.kind==="reps" && pg.target ? (pg.target[j]??pg.target.at(-1)) : (pg && pg.kind==="up" ? pg.lo : (last&&last.sets[j]?last.sets[j].r:""));
+  return `<section class="ex" data-ex="${i}">
+    <div class="exhead"><div style="min-width:0"><h3>${esc(e.name)}</h3><span class="small muted">${esc(e.muscle||"")}${secOf(e).length?` + ${esc(secOf(e).join(", "))}`:""}${e.target?` · Plan ${esc(e.target)}`:""}</span></div><button class="tiny ghost" data-act="rmex" data-i="${i}" aria-label="Übung entfernen">✕</button></div>
+    <div class="exmeta">${isHyroxEx(e)?"":`<span class="pill rest"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>Pause ${restFor(e)}</span>`}${last?`<span class="small muted">Letztes Mal (${fmtDate(last.date)}): <span class="mono">${esc(lastTxt)}</span></span>`:""}</div>
+    ${e.note?`<p class="small muted" style="margin:2px 0 6px">💡 ${esc(e.note)}</p>`:""}
+    ${pg?`<div class="prog ${pg.kind}"><b>${pg.kind==="up"?"Heute steigern":pg.kind==="reps"?"Heute":"Startgewicht"}</b><span class="small">${esc(pg.text)}</span></div>`:""}
+    ${dist?`<div class="sets"><span class="h">#</span><span class="h">Meter</span><span class="h">Zeit</span><span class="h">kg</span><span></span>
+    ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(e.reps||(last&&last.sets[j]?last.sets[j].m:"")||"")}" aria-label="Meter Runde ${j+1}"><input class="num" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="m:ss" aria-label="Zeit Runde ${j+1}"><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(last&&last.sets[j]&&last.sets[j].w?last.sets[j].w:"–")}" aria-label="Gewicht Runde ${j+1}"><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Runde löschen">−</button>`).join("")}
+    </div>`:`<div class="sets"><span class="h">#</span><span class="h">kg</span><span class="h">Wdh</span><span class="h">RIR</span><span></span>
+    ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(phW(j))}" aria-label="Gewicht Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(phR(j))}" aria-label="Wiederholungen Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="–" aria-label="Wiederholungen in Reserve Satz ${j+1}"><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Satz löschen">−</button>`).join("")}
+    </div>`}
+    <div class="row"><button class="tiny" data-act="addset" data-i="${i}">+ ${dist?"Runde":"Satz"}</button><span class="small muted">${dist?"Zeit z. B. 2:05. Gewicht nur falls verwendet.":isHyroxEx(e)?"kg z. B. Ballgewicht.":"Graue Zahlen = Vorschlag. RIR = Wdh, die du noch geschafft hättest."}</span></div>
+  </section>`;
+}
+
+function vPlaene(){
+  if(ui.editPlan){ const p=S.plans.find(x=>x.id===ui.editPlan); if(p) return vPlanEdit(p); }
+  return `${weekBanner()}
+  ${S.plans.map(p=>`<section class="card">
+    <div class="row between"><h2>${esc(p.name)}</h2><button class="tiny" data-act="editplan" data-id="${esc(p.id)}">Bearbeiten</button></div>
+    ${p.kind==="cardio"?`<p class="muted">${esc(p.note||"Ausdauereinheit")}</p>`:
+      (p.exercises||[]).length?`<div class="list">${p.exercises.map(e=>`<div class="li"><div class="t"><b>${esc(e.name)}</b><span class="small muted">${esc(e.muscle||"")}${secOf(e).length?` + ${esc(secOf(e).join(", "))}`:""}${e.sets?` · ${e.sets} ${metricOf(e)==="dist"?"Runden":"Sätze"}`:""}${e.reps?` · ${esc(e.reps)} ${metricOf(e)==="dist"?"m":"Wdh"}`:""}${e.weight?` · <span class="mono">${esc(e.weight)} kg</span>`:""}${e.note?` · ${esc(e.note)}`:""}</span></div></div>`).join("")}</div>`
+      :`<p class="muted">Noch keine Übungen. Tippe auf „Bearbeiten“, um sie einzutragen.</p>`}
+    ${overlapHint(p)}
+  </section>`).join("")}
+  <section class="card"><h3>Neuer Plan</h3><div class="row"><input id="np_name" placeholder="z. B. Oberkörper A"><select id="np_kind" aria-label="Art"><option value="kraft">Kraft</option><option value="hyrox">Hyrox / Zirkel</option><option value="cardio">Ausdauer</option></select><button data-act="newplan">Anlegen</button></div></section>`;
+}
+function overlapHint(p){
+  if(!unlocked() || p.kind==="cardio") return "";
+  const byFocus={};
+  (p.exercises||[]).forEach(e=>{ const f=LIBMAP[e.name]?.focus; if(f){ (byFocus[f]=byFocus[f]||[]).push(e.name); } });
+  const dup=Object.entries(byFocus).filter(([f,a])=>a.length>1);
+  if(!dup.length) return "";
+  return `<div class="banner blue"><div class="eyebrow">Gleicher Schwerpunkt</div>${dup.map(([f,a])=>`<p class="small">${esc(a.join(" und "))} treffen beide: ${esc(f)}. Eine davon tauschen?</p>`).join("")}</div>`;
+}
+function vPlanEdit(p){
+  const ex=p.exercises||[];
+  return `<section class="card">
+    <div class="exhead"><button class="tiny ghost" data-act="closeplan">← Zurück</button><button class="tiny ghost" data-act="delplan" data-id="${esc(p.id)}">Plan löschen</button></div>
+    <label class="f">Name<input id="pe_name" value="${esc(p.name)}"></label>
+    ${p.kind==="cardio"?`<label class="f">Beschreibung<textarea id="pe_note" rows="3">${esc(p.note||"")}</textarea></label>`:""}
+  </section>
+  ${p.kind==="cardio"?"":ex.map((e,i)=>`<section class="ex">
+    <div class="exhead"><b>Übung ${i+1}</b><div class="iconrow"><button class="tiny ghost" data-act="mvex" data-i="${i}" data-d="-1" aria-label="Nach oben" ${i===0?"disabled":""}>↑</button><button class="tiny ghost" data-act="mvex" data-i="${i}" data-d="1" aria-label="Nach unten" ${i===ex.length-1?"disabled":""}>↓</button><button class="tiny ghost" data-act="delex" data-i="${i}" aria-label="Übung löschen">✕</button></div></div>
+    <label class="f">Übung<input id="pe_${i}_name" list="libnames" value="${esc(e.name)}"></label>
+    <div class="form g2"><label class="f">Hauptmuskel<select id="pe_${i}_muscle">${MUSCLES.map(m=>`<option ${m===(e.muscle||"Unbekannt")?"selected":""}>${m}</option>`).join("")}</select></label>
+    <label class="f">Art<select id="pe_${i}_comp"><option value="1" ${isCompound(e)?"selected":""}>Grundübung</option><option value="0" ${isCompound(e)?"":"selected"}>Isolation</option></select></label></div>
+    ${isHyroxEx(e)?"":`<div class="f small muted">Mitbeteiligt (zählt halb)</div>
+    <div class="chips">${MAIN_MUSCLES.filter(m=>m!==e.muscle).map(m=>`<label><input type="checkbox" id="pe_${i}_sec_${MAIN_MUSCLES.indexOf(m)}" ${secOf(e).includes(m)?"checked":""}><span>${m}</span></label>`).join("")}</div>`}
+    ${p.kind==="hyrox"||isHyroxEx(e)?`<label class="f">Messart<select id="pe_${i}_metric"><option value="reps" ${metricOf(e)==="reps"?"selected":""}>Gewicht × Wiederholungen</option><option value="dist" ${metricOf(e)==="dist"?"selected":""}>Distanz + Zeit</option></select></label>`:""}
+    <div class="form g3">
+      <label class="f">${metricOf(e)==="dist"?"Runden":"Sätze"}<input class="num" inputmode="numeric" id="pe_${i}_sets" value="${esc(e.sets||"")}"></label>
+      <label class="f">${metricOf(e)==="dist"?"Meter":"Wdh"}<input class="num" id="pe_${i}_reps" value="${esc(e.reps||"")}" placeholder="${metricOf(e)==="dist"?"500":"8-12"}"></label>
+      <label class="f">kg<input class="num" inputmode="decimal" id="pe_${i}_weight" value="${esc(e.weight||"")}"></label>
+    </div>
+    <label class="f">Notiz (Einstellung, Griff …)<input id="pe_${i}_note" value="${esc(e.note||"")}"></label>
+    ${isHyroxEx(e)?"":`<details><summary>Alternativen für ${esc(e.muscle||"diesen Muskel")}</summary><div>${alts(e)}</div></details>`}
+  </section>`).join("")}
+  ${p.kind==="cardio"?"":`<button data-act="addplanex">+ Übung</button>`}
+  <button class="primary" data-act="saveplan" data-id="${esc(p.id)}" style="min-height:52px">Plan speichern</button>
+  <datalist id="libnames">${LIB.map(l=>`<option value="${esc(l[0])}">`).join("")}</datalist>`;
+}
+function alts(e){
+  const list=LIB.filter(l=>l[1]===e.muscle && l[0]!==e.name);
+  if(!list.length) return `<p class="small muted">Wähle zuerst den Muskel, dann erscheinen hier passende Übungen.</p>`;
+  return list.map(l=>`<div class="li"><div class="t"><b>${esc(l[0])}</b><span class="small muted">${esc(l[2])} · ${esc(l[3])}</span></div></div>`).join("");
+}
+
+function vFortschritt(part){
+  const names=[...new Set(S.logs.flatMap(l=>(l.entries||[]).map(e=>e.name)))].sort();
+  const cnt = n => S.logs.filter(l=>(l.entries||[]).some(e=>e.name===n && (e.sets||[]).some(s=>num(s.w)>0))).length;
+  const sel = names.includes(ui.progEx) ? ui.progEx : [...names].sort((a,b)=>cnt(b)-cnt(a))[0];
+  const pts=[];
+  if(sel){ [...S.logs].reverse().forEach(l=>{ const e=(l.entries||[]).find(x=>x.name===sel); if(!e) return; let best=0,top=0,vol=0; (e.sets||[]).forEach(s=>{ const w=num(s.w)||0,r=num(s.r)||0; best=Math.max(best,e1rm(w,r)); top=Math.max(top,w); vol+=w*r; }); if(best) pts.push({date:l.date,e1rm:best,top,vol}); }); }
+  const wkFrom = daysAgo(6);
+  const spm = setsPerMuscle(wkFrom);
+  const main=["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden"];
+  const secK = `<section class="card">
+    <div class="row between"><h2>Kraft pro Übung</h2></div>
+    ${names.length?`<select id="prog_sel" aria-label="Übung wählen">${names.map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("")}</select>
+    ${pts.length?`<div class="grid2">
+      <div class="stat"><span>Geschätztes 1RM</span><b>${pts.at(-1).e1rm.toFixed(1)}</b><span>kg, ${pts.length>1?`${(pts.at(-1).e1rm-pts[0].e1rm>=0?"+":"")+(pts.at(-1).e1rm-pts[0].e1rm).toFixed(1)} seit ${fmtDate(pts[0].date)}`:"erste Messung"}</span></div>
+      <div class="stat"><span>Schwerster Satz</span><b>${pts.at(-1).top}</b><span>kg, letzte Einheit</span></div>
+      <div class="stat"><span>Volumen</span><b>${Math.round(pts.at(-1).vol)}</b><span>kg × Wdh, letzte Einheit</span></div></div>
+      <div class="chart">${lineChart(pts.map(p=>({x:p.date,y:p.e1rm})),{unit:"kg"})}</div>
+      <p class="small muted">Geschätztes 1RM nach Epley: Gewicht × (1 + Wdh ÷ 30). Steigt die Linie, wirst du stärker.</p>`:""}`
+      :`<p class="muted">Sobald du Trainings speicherst, siehst du hier pro Übung, wie deine Kraft steigt.</p>`}
+  </section>`;
+  const secM = `<section class="card">
+    <div class="row between"><h2>Sätze pro Muskel</h2><span class="pill">letzte 7 Tage</span></div>
+    <div class="list" style="gap:8px">${main.map(m=>{ const n=spm[m]||0; return `<div class="musclerow"><span>${m}</span><div class="bar" title="Grüner Bereich 10–20 Sätze"><span class="band" style="left:${10/25*100}%;width:${10/25*100}%"></span><i style="width:${Math.min(100,n/25*100)}%"></i></div><span class="num" style="text-align:right">${String(Math.round(n*2)/2).replace(".",",")}</span></div>`; }).join("")}</div>
+    <p class="small muted">Grüner Bereich: 10–20 harte Sätze pro Woche, der Bereich mit dem besten Verhältnis von Aufwand zu Wachstum. Direkte Sätze zählen 1, mitbeteiligte Muskeln 0,5 (z. B. Bankdrücken: 1 Satz Brust, je 0,5 für Trizeps und Schulter). Die mitbeteiligten Muskeln stellst du pro Übung unter „Pläne → Bearbeiten“ ein.</p>
+  </section>`;
+  return part==="muskeln"?secM:secK;
+}
+
+function lineChart(pts,{unit="",w=360,h=190,color="var(--accent)",band=null}={}){
+  if(!pts.length) return "";
+  const pad={l:36,r:8,t:10,b:24};
+  const ys=pts.map(p=>p.y); let lo=Math.min(...ys), hi=Math.max(...ys);
+  if(band){ lo=Math.min(lo,band[0]); hi=Math.max(hi,band[1]); }
+  if(hi-lo<1){ hi+=1; lo-=1; } const span=hi-lo; lo-=span*.08; hi+=span*.08;
+  const t0=new Date(pts[0].x).getTime(), t1=new Date(pts.at(-1).x).getTime(); const tr=Math.max(1,t1-t0);
+  const X=x=> pts.length===1 ? (pad.l+(w-pad.l-pad.r)/2) : pad.l+(new Date(x).getTime()-t0)/tr*(w-pad.l-pad.r);
+  const Y=y=> pad.t+(1-(y-lo)/(hi-lo))*(h-pad.t-pad.b);
+  const ticks=4; let g="";
+  for(let i=0;i<=ticks;i++){ const v=lo+(hi-lo)*i/ticks; const y=Y(v); g+=`<line x1="${pad.l}" x2="${w-pad.r}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${pad.l-6}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${v.toFixed(span<10?1:0)}</text>`; }
+  const d=pts.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(1)+" "+Y(p.y).toFixed(1)).join(" ");
+  const area = pts.length>1 ? `<path d="${d} L${X(pts.at(-1).x)} ${h-pad.b} L${X(pts[0].x)} ${h-pad.b} Z" fill="${color}" opacity=".12"/>` : "";
+  const bandR = band ? `<rect x="${pad.l}" width="${w-pad.l-pad.r}" y="${Y(band[1])}" height="${Y(band[0])-Y(band[1])}" fill="var(--good)" opacity=".12"/>` : "";
+  const last=pts.at(-1);
+  return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Verlauf">${g}${bandR}${area}<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="2.5" fill="${color}"/>`).join("")}<circle cx="${X(last.x)}" cy="${Y(last.y)}" r="5" fill="${color}"/><text x="${pad.l}" y="${h-8}" font-size="11" fill="var(--muted)">${fmtDate(pts[0].x)}</text><text x="${w-pad.r}" y="${h-8}" font-size="11" text-anchor="end" fill="var(--muted)">${fmtDate(last.x)}</text></svg>`;
+}
+
+function vBody(sub){
+  const bw=bwSorted();
+  const last=bw.at(-1);
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b.kg,0)/arr.length : null;
+  const a7=avg(bw.filter(x=>x.date>=daysAgo(6))), aPrev=avg(bw.filter(x=>x.date>=daysAgo(13)&&x.date<daysAgo(6)));
+  const g=S.garmin[0];
+  const gs=[...S.garmin].reverse();
+  const seg="";
+  if(sub==="garmin") return seg+`<section class="card">
+    <div class="row between"><h2>Garmin-Werte</h2>${g?`<span class="pill good">Stand ${fmtDate(g.date)}</span>`:`<span class="pill warn">noch nicht verbunden</span>`}</div>
+    ${g?`<div class="grid2">
+      ${stat("Schlaf",g.sleepH!=null?g.sleepH.toFixed(1):"–","h"+(g.sleepScore?` · Score ${g.sleepScore}`:""))}
+      ${stat("Ruhepuls",g.rhr??"–","bpm")}
+      ${stat("HRV",g.hrv??"–","ms (Nacht-Schnitt)")}
+      ${stat("Schritte",g.steps!=null?g.steps.toLocaleString("de-CH"):"–","")}
+      ${stat("Body Battery",g.bodyBattery??"–","max. am Morgen")}
+      ${stat("Stress",g.stress??"–","Schnitt")}
+    </div>
+    ${gs.filter(x=>x.rhr).length>1?`<h3>Ruhepuls</h3><div class="chart">${lineChart(gs.filter(x=>x.rhr).map(x=>({x:x.date,y:x.rhr})),{color:"var(--plate-red)"})}</div><p class="small muted">Ein Ruhepuls, der mehrere Tage 5+ Schläge über deinem Normalwert liegt, kann auf zu wenig Erholung oder eine Erkrankung hindeuten.</p>`:""}
+    ${gs.filter(x=>x.hrv).length>1?`<h3>HRV</h3><div class="chart">${lineChart(gs.filter(x=>x.hrv).map(x=>({x:x.date,y:x.hrv})),{color:"var(--plate-green)"})}</div>`:""}
+    ${(g.activities||[]).length?`<h3>Aktivitäten</h3><div class="list">${S.garmin.slice(0,7).flatMap(d=>(d.activities||[]).map(a=>`<div class="li"><div class="t"><b>${esc(a.name||a.type)}</b><span class="small muted">${fmtDate(d.date)}${a.km?` · ${a.km} km`:""}${a.min?` · ${a.min} min`:""}${a.avgHr?` · Ø ${a.avgHr} bpm`:""}</span></div></div>`)).join("")}</div>`:""}`
+    :`<p>Deine Forerunner-Daten (Schlaf, Ruhepuls, HRV, Schritte, Läufe, Hyrox) erscheinen hier, sobald die Verbindung steht.</p>
+      <p class="small muted">Einrichtung: Auf connect.garmin.com in den Kontoeinstellungen einen persönlichen API-Schlüssel erstellen. Den Rest richtet Claude im Chat mit dir ein. Den Schlüssel nie in den Chat kopieren.</p>`}
+  </section>`;
+  return seg+`<section class="card">
+    <div class="row between"><h2>Körpergewicht</h2>${last?`<span class="pill">zuletzt ${fmtDate(last.date)}</span>`:""}</div>
+    <div class="form g2"><label class="f">Datum<input type="date" id="bw_date" value="${todayStr()}"></label><label class="f">Gewicht (kg)<input class="num" inputmode="decimal" id="bw_kg" placeholder="${last?last.kg:"80.0"}"></label></div>
+    <button class="primary" data-act="addbw">Gewicht eintragen</button>
+    ${bw.length?`<div class="grid2"><div class="stat"><span>Aktuell</span><b>${last.kg.toFixed(1)}</b><span>kg</span></div><div class="stat"><span>Schnitt 7 Tage</span><b>${a7?a7.toFixed(1):"–"}</b><span>${a7&&aPrev?`${(a7-aPrev>=0?"+":"")+(a7-aPrev).toFixed(1)} kg zur Vorwoche`:"kg"}</span></div><div class="stat"><span>Seit Start</span><b>${(last.kg-bw[0].kg>=0?"+":"")+(last.kg-bw[0].kg).toFixed(1)}</b><span>kg seit ${fmtDate(bw[0].date)}</span></div></div>
+    <div class="chart">${lineChart(bw.map(b=>({x:b.date,y:b.kg})),{color:"var(--plate-red)"})}</div>`:`<p class="muted">Am aussagekräftigsten: morgens nach dem WC, vor dem Essen, 3–7× pro Woche wiegen. Der Wochenschnitt zählt, nicht der einzelne Tag.</p>`}
+  </section>`;
+}
+
+/* ---------- sleep + readiness ---------- */
+const SLEEP_GOAL = 8; const STEP_GOAL = 10000;
+function nights(){ const m={}; S.sleep.forEach(x=>{ if(x.h>0) m[x.date]={date:x.date,sleepH:x.h,src:"manuell"}; }); S.garmin.forEach(x=>{ if(x.sleepH!=null) m[x.date]={...x,src:"Garmin"}; }); return Object.values(m).sort((a,b)=>a.date<b.date?1:-1); }
+function lastNight(){ const g=nights()[0]; if(!g) return null; const gd=S.garmin.find(x=>x.date===g.date)||{}; return (g.date>=daysAgo(1)) ? {...gd,...g} : null; }
+function median(a){ if(!a.length) return null; const b=[...a].sort((x,y)=>x-y); const m=Math.floor(b.length/2); return b.length%2?b[m]:(b[m-1]+b[m])/2; }
+function baselines(excludeDate){
+  const rows=S.garmin.filter(x=>x.date!==excludeDate && x.date>=daysAgo(30));
+  return { rhr: median(rows.map(x=>x.rhr).filter(v=>v>0)), hrv: median(rows.map(x=>x.hrv).filter(v=>v>0)), n: rows.length };
+}
+function readiness(){
+  const g=lastNight(); if(!g) return null;
+  const h=g.sleepH; const b=baselines(g.date);
+  const recent=nights().filter(x=>x.date>=daysAgo(3)).slice(0,3);
+  const shortNights=recent.filter(x=>x.sleepH<6).length;
+  let level = h>=7?0 : h>=6?1 : h>=4.5?2 : 3;
+  if(shortNights>=2 && level<3) level=Math.max(level,2)+ (level>=2?1:0);
+  const flags=[];
+  if(b.n>=7 && b.rhr && g.rhr && g.rhr>=b.rhr+5) flags.push(`Ruhepuls ${g.rhr} bpm, ${Math.round(g.rhr-b.rhr)} über deinem Schnitt`);
+  if(b.n>=7 && b.hrv && g.hrv && g.hrv<b.hrv*0.85) flags.push(`HRV ${g.hrv} ms, deutlich unter deinem Schnitt von ${Math.round(b.hrv)}`);
+  if(flags.length && level<3) level++;
+  level=Math.min(level,3);
+  const T=[
+    {c:"good", t:"Normal trainieren", d:"Gut geschlafen. Ein guter Tag, um Gewicht oder Wiederholungen zu steigern."},
+    {c:"warn", t:"Normal trainieren, nichts erzwingen", d:"Knapp unter deinem Ziel. Trainiere wie geplant, aber versuch keine neuen Rekorde, wenn es sich schwer anfühlt. Morgens oder mittags trainieren ist besser als spät am Abend."},
+    {c:"warn", t:"Weniger Volumen", d:"Zu wenig Schlaf. Schwere Grundübungen leiden kaum, viele Wiederholungen und Ausdauer deutlich mehr. Mach pro Übung einen Satz weniger, bleib bei 2–3 Wiederholungen in Reserve und verschieb Hyrox oder einen harten Lauf auf einen ausgeschlafenen Tag."},
+    {c:"bad", t:"Leichter Tag", d:"Sehr wenig Schlaf oder mehrere kurze Nächte. Der Muskelaufbau ist heute gebremst. Besser lockeres Training, Technik, Spazieren oder Pause, und heute Abend früh ins Bett."}
+  ][level];
+  return {g,h,level,flags,shortNights,...T};
+}
+function fmtH(h){ const H=Math.floor(h), M=Math.round((h-H)*60); return `${H} h ${String(M).padStart(2,"0")}`; }
+function readinessCard(){
+  if(getDraft()) return "";
+  const r=readiness();
+  if(!r) return `<section class="card"><div class="row between"><h2>Schlaf & heute</h2><span class="pill warn">keine Garmin-Daten</span></div><p class="small muted">Sobald Garmin verbunden ist, siehst du hier jeden Morgen, wie du geschlafen hast und was das fürs heutige Training heisst.</p></section>`;
+  const col = r.c==="good"?"var(--good)":r.c==="bad"?"var(--bad)":"var(--warn)";
+  return `<section class="card" style="border-left:4px solid ${col}">
+    <div class="row between"><div><div class="eyebrow">Letzte Nacht</div><h2 class="num" style="font-family:var(--f-mono);text-transform:none">${fmtH(r.h)}</h2></div><span class="pill ${r.c}">${r.h>=SLEEP_GOAL?`Ziel ${SLEEP_GOAL} h erreicht`:`Ziel ${SLEEP_GOAL} h verpasst`}</span></div>
+    <h3>${r.t}</h3>
+    <p class="small">${r.d}</p>
+    ${r.flags.length?`<p class="small muted">Zusätzlich: ${r.flags.map(esc).join(" · ")}.</p>`:""}
+    ${r.shortNights>=2?`<p class="small muted">${r.shortNights} der letzten 3 Nächte unter 6 Stunden.</p>`:""}
+    <p class="src">Grundlage: Craven et al. 2022, Lamon et al. 2021 (Details im Coach-Tab).</p>
+  </section>`;
+}
+const nightsList = () => nights();
+function sleepBars(list,{w=360,h=170}={}){
+  const pad={l:30,r:6,t:14,b:22}, max=Math.max(9,...list.map(n=>n.sleepH||0));
+  const bw=(w-pad.l-pad.r)/list.length; const Y=v=>pad.t+(1-v/max)*(h-pad.t-pad.b);
+  const bars=list.map((n,i)=>{ const x=pad.l+i*bw+bw*0.15, ww=bw*0.7; const lab=`<text x="${x+ww/2}" y="${h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">${new Date(n.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short"}).slice(0,2)}</text>`;
+    if(n.sleepH==null) return lab+`<rect x="${x}" y="${Y(0)-2}" width="${ww}" height="2" fill="var(--line)"/>`;
+    const c=n.sleepH>=SLEEP_GOAL?"var(--good)":n.sleepH>=6?"var(--warn)":"var(--bad)"; return `<rect x="${x}" y="${Y(n.sleepH)}" width="${ww}" height="${Y(0)-Y(n.sleepH)}" rx="3" fill="${c}"/>${lab}`; }).join("");
+  const grid=[0,3,6,9].filter(v=>v<=max).map(v=>`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l-6}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${v} h</text>`).join("");
+  const goal=`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(SLEEP_GOAL)}" y2="${Y(SLEEP_GOAL)}" stroke="var(--fg)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${w-pad.r}" y="${Y(SLEEP_GOAL)-5}" font-size="11" text-anchor="end" fill="var(--fg)">Ziel ${SLEEP_GOAL} h</text>`;
+  return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Schlafdauer pro Nacht">${grid}${bars}${goal}</svg>`;
+}
+function weekDates(offset=0){ const d=new Date(); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow+offset*7); const out=[]; for(let i=0;i<7;i++){ const x=new Date(d); x.setDate(d.getDate()+i); out.push(x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")); } return out; }
+
+/* bedtime regularity */
+const hm2min = t => { if(!t) return null; const [h,m]=t.split(":").map(Number); return h*60+m; };
+const bedMin = t => { const m=hm2min(t); return m==null?null:(m<720?m+1440:m); }; /* minutes after previous noon-ish: 23:00=1380, 01:00=1500 */
+const min2hm = m => { m=((Math.round(m)%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); };
+function sd(a){ if(a.length<2) return null; const mu=a.reduce((x,y)=>x+y,0)/a.length; return Math.sqrt(a.reduce((x,y)=>x+(y-mu)**2,0)/(a.length-1)); }
+function bedtimeCard(list){
+  list=list.slice(-7);
+  const withT=list.filter(n=>n.sleepStart&&n.sleepEnd);
+  if(!withT.length) return `<section class="card"><h2>Schlafenszeiten</h2><p class="small muted">Sobald Garmin Einschlaf- und Aufwachzeiten liefert, siehst du hier, wie regelmässig du schläfst.</p></section>`;
+  const recent=withT.filter(n=>n.date>=daysAgo(6)); const base=recent.length?recent:withT;
+  const beds=base.map(n=>bedMin(n.sleepStart)), wakes=base.map(n=>hm2min(n.sleepEnd));
+  const avgBed=beds.reduce((a,b)=>a+b,0)/beds.length, avgWake=wakes.reduce((a,b)=>a+b,0)/wakes.length;
+  const spread=sd(beds);
+  const target=avgWake+1440-(SLEEP_GOAL*60+15);
+  const w=360,h=list.length*22+30,pad={l:30,r:8,t:22,b:6};
+  const t0=21*60, t1=35*60; /* 21:00 .. 11:00 next day */
+  const X=m=>pad.l+(m-t0)/(t1-t0)*(w-pad.l-pad.r);
+  const rowH=(h-pad.t-pad.b)/list.length;
+  let grid=""; for(let m=t0;m<=t1;m+=120){ grid+=`<line x1="${X(m)}" x2="${X(m)}" y1="${pad.t-4}" y2="${h-pad.b}" stroke="var(--line)"/><text x="${X(m)}" y="${pad.t-8}" font-size="10" text-anchor="${m===t0?"start":m===t1?"end":"middle"}" fill="var(--muted)">${min2hm(m)}</text>`; }
+  const bars=list.map((n,i)=>{ const y=pad.t+i*rowH+rowH*0.18, hh=rowH*0.64; const lab=`<text x="${pad.l-4}" y="${y+hh*0.8}" font-size="10" text-anchor="end" fill="var(--muted)">${new Date(n.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short"}).slice(0,2)}</text>`;
+    if(!n.sleepStart||!n.sleepEnd) return lab;
+    const b=bedMin(n.sleepStart), e=hm2min(n.sleepEnd)+1440; const c=n.sleepH>=SLEEP_GOAL?"var(--good)":n.sleepH>=6?"var(--warn)":"var(--bad)";
+    return lab+`<rect x="${X(Math.max(t0,b))}" y="${y}" width="${Math.max(2,X(Math.min(t1,e))-X(Math.max(t0,b)))}" height="${hh}" rx="3" fill="${c}"/>`; }).join("");
+  const tl=`<line x1="${X(target)}" x2="${X(target)}" y1="${pad.t-4}" y2="${h-pad.b}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>`;
+  return `<section class="card">
+    <div class="row between"><h2>Schlafenszeiten</h2><span class="pill">letzte ${base.length} Nächte</span></div>
+    <div class="grid2">
+      ${stat("Ø Einschlafen",min2hm(avgBed),"Uhr")}
+      ${stat("Ø Aufwachen",min2hm(avgWake),"Uhr")}
+      ${stat("Schwankung",spread!=null?"± "+Math.round(spread)+" min":"–",spread==null?"ab 2 Nächten":spread<=30?"regelmässig":spread<=60?"etwas unregelmässig":"unregelmässig")}
+    </div>
+    <div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Einschlaf- und Aufwachzeiten pro Nacht">${grid}${bars}${tl}</svg></div>
+    <div class="banner blue"><p class="small"><b>Für ${SLEEP_GOAL} h Schlaf:</b> Bei deiner Aufwachzeit um ${min2hm(avgWake)} solltest du spätestens um <b>${min2hm(target)}</b> im Bett liegen (gestrichelte Linie, mit 15 min zum Einschlafen). Versuch, jeden Tag ungefähr zur gleichen Zeit ins Bett zu gehen, auch am Wochenende.</p></div>
+    <p class="src">Regelmässige Schlafzeiten hängen in Beobachtungsstudien mit besserer Gesundheit zusammen; die Belege sind weniger stark als für die Schlafdauer.</p>
+  </section>`;
+}
+function vSchlaf(){
+  const all=nights(); const by=Object.fromEntries(all.map(n=>[n.date,n]));
+  const wk=weekDates(0), prev=weekDates(-1);
+  const rows=wk.map(d=>by[d]||{date:d,sleepH:null});
+  const have=rows.filter(r=>r.sleepH!=null), haveP=prev.map(d=>by[d]).filter(Boolean);
+  const avg=have.length?have.reduce((a,b)=>a+b.sleepH,0)/have.length:null;
+  const avgP=haveP.length?haveP.reduce((a,b)=>a+b.sleepH,0)/haveP.length:null;
+  const hit=have.filter(r=>r.sleepH>=SLEEP_GOAL).length;
+  const debt=have.reduce((a,b)=>a+Math.max(0,SLEEP_GOAL-b.sleepH),0);
+  const today=todayStr();
+  const last14=[]; for(let i=13;i>=0;i--){ const d=daysAgo(i); last14.push(by[d]||{date:d,sleepH:null}); }
+  return `<section class="card">
+    <div class="row between"><h2>Schlaf diese Woche</h2><span class="pill">${fmtDate(wk[0])} – ${fmtDate(wk[6])}</span></div>
+    <div class="grid2">
+      ${stat("Schnitt",avg!=null?fmtH(avg):"–", avg!=null&&avgP!=null?`${avg-avgP>=0?"+":"−"}${fmtH(Math.abs(avg-avgP))} zur Vorwoche`:"pro Nacht")}
+      ${stat("Ziel erreicht",`${hit} / ${have.length}`,`Nächte mit mindestens ${SLEEP_GOAL} h`)}
+      ${stat("Schlafdefizit",fmtH(debt),`unter ${SLEEP_GOAL} h, diese Woche`)}
+    </div>
+    <div class="list">${rows.map(r=>{ const fut=r.date>today; const v=r.sleepH; const c=v==null?"var(--line)":v>=SLEEP_GOAL?"var(--good)":v>=6?"var(--warn)":"var(--bad)";
+      return `<div class="li" style="${fut?"opacity:.45":""}"><span style="width:76px;flex:none" class="small">${fmtDate(r.date)}</span><div class="bar" style="flex:1"><i style="width:${v?Math.min(100,v/10*100):0}%;background:${c}"></i><span style="position:absolute;top:-2px;bottom:-2px;left:${SLEEP_GOAL*10}%;width:2px;background:var(--fg);opacity:.5"></span></div><span class="num small" style="width:62px;text-align:right">${v!=null?fmtH(v):(fut?"":"–")}</span></div>`; }).join("")}</div>
+    <p class="small muted">Strich bei ${SLEEP_GOAL} h. Grün ab ${SLEEP_GOAL} h, gelb ab 6 h, rot unter 6 h.</p>
+  </section>
+  <section class="card">
+    <div class="row between"><h2>Letzte 14 Nächte</h2></div>
+    <div class="chart">${sleepBars(last14)}</div>
+  </section>
+  ${bedtimeCard(last14)}
+  <section class="card">
+    <h3>Schlaf von Hand eintragen</h3>
+    <p class="small muted">Nur nötig, solange Garmin nicht verbunden ist. Garmin-Werte haben danach Vorrang.</p>
+    <label class="f">Aufgewacht am<input type="date" id="sl_date" value="${todayStr()}"></label>
+    <div class="form g2"><label class="f">Stunden<input class="num" inputmode="decimal" id="sl_h" placeholder="7"></label><label class="f">Minuten<input class="num" inputmode="numeric" id="sl_m" placeholder="30"></label></div>
+    <button data-act="addsleep">Schlaf speichern</button>
+  </section>
+  <section class="card">
+    <h3>Warum genug Schlaf zählt</h3>
+    <p class="small">Mit 6 Stunden oder weniger sinkt die Leistung messbar: Maximalkraft wenig, Kraftausdauer und Ausdauer deutlich. Mehrere kurze Nächte wirken stärker als eine. Was das für dein heutiges Training heisst, steht jeden Morgen oben im Training-Tab.</p>
+    <p class="src">Craven et al. 2022; Lamon et al. 2021 (Details im Coach-Tab).</p>
+  </section>`;
+}
+
+/* ---------- running ---------- */
+function allRuns(){
+  const g = S.garmin.flatMap(d=>(d.activities||[]).filter(a=>/run|lauf/i.test(a.type||a.name||"")).map(a=>({date:a.date||d.date,km:a.km,min:a.min,avgHr:a.avgHr,name:a.name||"Lauf",src:"Garmin"})));
+  const m = S.runs.map(r=>({...r,src:"manuell"}));
+  return [...g,...m].filter(r=>r.km>0).sort((a,b)=>a.date<b.date?1:-1);
+}
+const pace = (min,km)=>{ if(!min||!km) return "–"; const p=min/km; const mm=Math.floor(p), ss=Math.round((p-mm)*60); return `${mm}:${String(ss===60?59:ss).padStart(2,"0")}`; };
+function vLaufen(){
+  const runs=allRuns();
+  const wk=isoWeek();
+  const weeks=[]; for(let i=7;i>=0;i--){ const d=daysAgo(i*7); weeks.push(isoWeek(d)); }
+  const uniq=[...new Set(weeks)];
+  const kmBy=Object.fromEntries(uniq.map(w=>[w,0])); runs.forEach(r=>{ const w=isoWeek(r.date); if(w in kmBy) kmBy[w]+=r.km; });
+  const kmWeek=kmBy[wk]||0;
+  const last4=uniq.slice(-4).reduce((a,w)=>a+kmBy[w],0)/4;
+  const w=360,h=160,pad={l:6,r:6,t:16,b:22}; const max=Math.max(5,...Object.values(kmBy)); const bw=(w-pad.l-pad.r)/uniq.length; const Y=v=>pad.t+(1-v/max)*(h-pad.t-pad.b);
+  const bars=uniq.map((k,i)=>{ const x=pad.l+i*bw+bw*.2, ww=bw*.6, v=kmBy[k]; return `<rect x="${x}" y="${Y(v)}" width="${ww}" height="${Y(0)-Y(v)}" rx="3" fill="${k===wk?"var(--accent)":"var(--muted)"}" opacity="${k===wk?1:.55}"/><text x="${x+ww/2}" y="${h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">W${k.slice(-2)}</text>${v?`<text x="${x+ww/2}" y="${Y(v)-4}" font-size="10" text-anchor="middle" fill="var(--fg)">${v.toFixed(1)}</text>`:""}`; }).join("");
+  return `<section class="card">
+    <div class="row between"><h2>Kilometer</h2>${S.garmin.length?`<span class="pill good">mit Garmin</span>`:`<span class="pill warn">Garmin noch nicht verbunden</span>`}</div>
+    <div class="grid2">${stat("Diese Woche",kmWeek.toFixed(1),"km")}${stat("Schnitt 4 Wochen",last4.toFixed(1),"km pro Woche")}${stat("Läufe total",runs.length,"erfasst")}</div>
+    ${runs.length?`<div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Kilometer pro Woche">${bars}</svg></div>`:`<p class="muted">Deine Läufe und Laufband-Einheiten erscheinen hier automatisch, sobald Garmin verbunden ist. Bis dahin kannst du sie unten von Hand eintragen.</p>`}
+  </section>
+  ${runs.length?`<section class="card"><h2>Letzte Läufe</h2><div class="list">${runs.slice(0,12).map(r=>`<div class="li"><div class="t"><b>${esc(r.name||"Lauf")}</b><span class="small muted">${fmtDate(r.date)} · ${esc(r.src)}</span></div><div style="text-align:right" class="num small"><b>${(+r.km).toFixed(2)} km</b><br><span class="muted">${pace(r.min,r.km)} /km${r.avgHr?` · Ø ${r.avgHr}`:""}</span></div>${r.src==="manuell"?`<button class="tiny ghost" data-act="delrun" data-id="${esc(r.id)}" aria-label="Lauf löschen">✕</button>`:""}</div>`).join("")}</div></section>`:""}
+  <section class="card">
+    <h3>Lauf von Hand eintragen</h3>
+    <label class="f">Datum<input type="date" id="run_date" value="${todayStr()}"></label>
+    <div class="form g2"><label class="f">Distanz (km)<input class="num" inputmode="decimal" id="run_km" placeholder="5.0"></label><label class="f">Dauer (min)<input class="num" inputmode="decimal" id="run_min" placeholder="28"></label></div>
+    <button data-act="addrun">Lauf speichern</button>
+  </section>
+  <section class="card">
+    <h3>Laufen neben dem Krafttraining</h3>
+    <p class="small">Moderates Laufen bremst den Muskelaufbau nicht. Harte Läufe und Hyrox mindestens 24 h vor oder nach dem Beintag, am selben Tag erst Kraft, dann Laufen. 1–2 km auf dem Laufband nach dem Krafttraining sind kein Problem.</p>
+    <p class="src">Schumann et al. 2022; Wilson et al. 2012 (Details im Coach-Tab).</p>
+  </section>`;
+}
+
+const stat=(l,v,u)=>`<div class="stat"><span>${l}</span><b>${esc(v)}</b><span>${esc(u)}</span></div>`;
+
+function mealPlanCard(){
+  const sh=S.shop; const pl=(sh&&sh.plan)||[]; if(!pl.length) return "";
+  return `<div class="sechead">Essensplan bis zum nächsten Einkauf</div><div class="glist">${pl.map(x=>{ const m=String(x).match(/^([^:]+):\s*(.*)$/); return `<div class="grow"><span class="gt"><b>${esc(m?m[1]:x)}</b>${m?`<span>${esc(m[2])}</span>`:""}</span></div>`; }).join("")}</div>`;
+}
+function foodsCard(){
+  const F=S.foods; if(!F||!(F.groups||[]).length) return "";
+  const chev='<svg class="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>';
+  const grp=g=>`<details class="acc" style="--acc:var(${esc(g.color||"--c-veg")})"><summary><span class="acc-ic" style="font-weight:700">${(g.items||[]).length}</span><span class="acc-tx"><b>${esc(g.title)}</b><span class="small muted">${esc(g.sub||(g.items||[]).map(i=>i.name).slice(0,3).join(", "))}</span></span>${chev}</summary><div class="acc-body">${(g.items||[]).map(i=>`<p class="small" style="margin:0 0 10px"><b>${esc(i.name)}</b><br><span class="muted">${esc(i.note||"")}</span></p>`).join("")}</div></details>`;
+  const sm=(F.smoothies||[]).length?`<details class="acc" style="--acc:var(--c-sleep)"><summary><span class="acc-ic" style="font-weight:700">${F.smoothies.length}</span><span class="acc-tx"><b>Smoothies</b><span class="small muted">für deinen Smoothie-Maker</span></span>${chev}</summary><div class="acc-body">${F.smoothies.map(s=>`<p class="small" style="margin:0 0 10px"><b>${esc(s.name)}</b> · <span class="muted">${esc(s.when||"")}, ${esc(s.protein||"")} Eiweiss</span><br>${esc(s.items)}</p>`).join("")}</div></details>`:"";
+  const src=(F.sources||[]).length?`<p class="secfoot">Quellen: ${F.sources.map(s=>`<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.n)}</a>`).join(" · ")}</p>`:"";
+  return `<div class="sechead">Deine Lebensmittel</div>${(F.groups||[]).map(grp).join("")}${sm}${src}`;
+}
+function vEssen(){
+  const bw=bwSorted(); const kg=bw.length?bw.at(-1).kg:80;
+  const sub = ui.foodSub==="liste"?"liste":"plan";
+  const seg = segBar("foodSub",[["plan","Ernährung"],["liste","Einkaufsliste"]],sub);
+  if(sub==="liste") return seg+vShop();
+  const N = window.NUTRI;
+  if(!N) return seg+`<section class="card"><p class="muted">Ernährungsteil wird vorbereitet.</p></section>`;
+  return seg+mealPlanCard()+N(kg)+foodsCard();
+}
+const chf = v => v==null?"–":"CHF "+Number(v).toFixed(2);
+function vShop(){
+  const sh=S.shop;
+  if(!sh) return `<section class="card"><h2>Noch keine Liste</h2><p class="small muted">Jeden Sonntagabend erstellt Claude hier deine Einkaufsliste für die Woche, mit den aktuellen Aktionen.</p></section>`;
+  const items=sh.items||[], extra=sh.extra||[], chk=sh.checked||{};
+  const total=items.reduce((a,i)=>a+(i.price||0),0);
+  const left=items.filter(i=>!chk[i.id]).reduce((a,i)=>a+(i.price||0),0);
+  const budget=prof().shopBudget||sh.budget||null;
+  const nAkt=items.filter(i=>i.aktion).length; const prot=items.reduce((a,i)=>a+(i.protein||0),0);
+  const cats=[["protein","Protein","var(--c-prot)"],["carbs","Kohlenhydrate","var(--c-carb)"],["veg","Obst & Gemüse","var(--c-veg)"],["other","Sonstiges","#8E8E93"]];
+  const row=i=>`<button class="grow shoprow${chk[i.id]?" done":""}" data-act="shopchk" data-id="${esc(i.id)}"><span class="ck">${chk[i.id]?"✓":""}</span><span class="gt"><b>${esc(i.name)}</b><span>${esc([i.qty>1?i.qty+" × ":""]+(i.size||""))}${i.aktion?` · <em class="akt">Aktion${i.until?" bis "+esc(i.until):""}</em>`:""}${i.why?` · ${esc(i.why)}`:""}</span></span><span class="gv">${i.est?"ca. ":""}${i.price!=null?Number(i.price).toFixed(2):"–"}</span></button>`;
+  return `<section class="card">
+    <div class="row between"><div><div class="eyebrow">${esc(sh.store||"")} · ${esc(sh.label||"")}</div><h2>Einkauf dieser Woche</h2></div></div>
+    <div class="grid2">${stat("Total",chf(total),`noch ${chf(left)} offen`)}${stat("Aktionen",nAkt,"Artikel im Angebot")}${stat("Protein",prot?Math.round(prot)+" g":"–","in der ganzen Liste")}</div>
+    ${budget?`<div class="bar"><i style="width:${Math.min(100,total/budget*100)}%;background:${total>budget?"var(--bad)":"var(--c-veg)"}"></i></div><p class="small muted">Budget ${chf(budget)} · ${total>budget?"überschritten um "+chf(total-budget):"noch "+chf(budget-total)+" Reserve"}</p>`:""}
+    <div class="form g2" style="align-items:end"><label class="f">Budget pro Woche (CHF)<input class="num" inputmode="decimal" id="shop_budget" value="${esc(prof().shopBudget||"")}" placeholder="z. B. 70"></label><button data-act="shopbudget">Speichern</button></div>
+  </section>
+  <div class="sechead">Eigene Artikel</div>
+  <div class="glist">${extra.map((x,j)=>`<button class="grow shoprow${chk["x"+j]?" done":""}" data-act="shopchk" data-id="x${j}"><span class="ck">${chk["x"+j]?"✓":""}</span><span class="gt"><b>${esc(x)}</b></span></button>`).join("")}
+    <div class="grow"><input id="shop_new" placeholder="Artikel hinzufügen …" style="background:transparent;padding:0;min-height:30px"><button class="tiny" data-act="shopadd">Hinzufügen</button></div></div>
+  ${cats.map(([k,l,c])=>{ const its=items.filter(i=>(i.cat||"other")===k); if(!its.length) return ""; return `<div class="sechead" style="color:${c}">${l}</div><div class="glist">${its.map(row).join("")}</div>`; }).join("")}
+  ${sh.note?`<p class="secfoot">${esc(sh.note)}</p>`:""}
+  <p class="secfoot">Aktionspreise von der Lidl-Aktionsübersicht, „ca.“ = geschätzter Normalpreis. Preise können im Laden abweichen.</p>`;
+}
+
+function vCoach(){
+  const wk=isoWeek(); const w=S.weeks[wk]||{};
+  const wd=["Mo","Di","Mi","Do","Fr","Sa","So"];
+  const c=S.coach;
+  return `${weekBanner()}
+  <section class="card">
+    <div class="row between"><h2>Diese Woche</h2><span class="pill">${wk}</span></div>
+    <p class="small muted">Wie viele Tage hast du diese Woche fürs Training? Daran richtet sich der Wochenplan.</p>
+    <div class="eyebrow">Trainingstage</div>
+    <div class="seg" role="group" aria-label="Trainingstage">${[2,3,4,5,6].map(n=>`<button data-act="setdays" data-n="${n}" aria-pressed="${w.days===n}" aria-label="${n} Tage">${n}</button>`).join("")}</div>
+    <div class="eyebrow">An welchen Tagen?</div>
+    <div class="daypick">${wd.map((d,i)=>`<label><input type="checkbox" id="wd_${i}" data-act="wdtoggle" ${ (w.weekdays||[]).includes(d)?"checked":""}><span>${d}</span></label>`).join("")}</div>
+    ${unlocked()&&w.days?splitFor(w.days):""}
+  </section>
+  <section class="card">
+    <div class="exhead" style="align-items:center"><div style="min-width:0"><h2>Ferienmodus</h2><p class="small muted">Pausiert Trainingsvorgaben, z. B. in den Ferien oder bei Krankheit.</p></div>
+    <button class="switch" role="switch" aria-checked="${!!(prof().vacation&&prof().vacation.on)}" data-act="vacation" aria-label="Ferienmodus"><span></span></button></div>
+  </section>
+  ${unlocked()? (c? `<section class="card">
+      <div class="row between"><h2>Empfehlungen</h2><span class="pill acc">${fmtDate(c.updatedAt)}</span></div>
+      ${c.summary?`<p>${esc(c.summary)}</p>`:""}
+      <div class="list">${(c.recommendations||[]).map(r=>`<div class="li" style="align-items:flex-start"><span class="plate" style="background:${r.priority==="hoch"?"var(--plate-red)":r.priority==="mittel"?"var(--plate-yellow)":"var(--plate-green)"};margin-top:7px"></span><div class="t"><b>${esc(r.title)}</b><span class="small">${esc(r.text)}</span>${r.source?`<span class="src">Quelle: ${esc(r.source)}</span>`:""}</div></div>`).join("")}</div>
+    </section>` : `<section class="card"><h2>Empfehlungen</h2><p class="muted">Der nächste Wochen-Check-in schreibt hier deine Empfehlungen hinein.</p></section>`)
+  : `<section class="card"><div class="lock"><span class="plate" style="background:var(--plate-yellow);margin-top:6px"></span><div><h3>Empfehlungen ab ${fmtDate(prof().unlockDate)}</h3><p class="small muted">Dann wertet der erste Wochen-Check-in deine Trainings, dein Gewicht und deine Garmin-Daten aus. Du bekommst eine Nachricht aufs Handy.</p></div></div></section>`}
+  <section class="card">
+    <h2>Grundlagen</h2>
+    <p class="small muted">Worauf sich die Empfehlungen stützen. Jeder Punkt mit Studienlage und Sicherheit.</p>
+    ${EVIDENCE.length?EVIDENCE.map(e=>`<details><summary>${esc(e.t)} <span class="pill ${e.c==="hoch"?"good":e.c==="mittel"?"warn":""}">Evidenz ${esc(e.c)}</span></summary><div><p>${esc(e.r)}</p>${e.s.map(s=>`<p class="src">${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.n)}</a>`:esc(s.n)}</p>`).join("")}</div></details>`).join(""):`<p class="muted">Wird geladen.</p>`}
+  </section>`;
+}
+/* ---------- tab containers ---------- */
+function segBar(key, items, cur){ return `<div class="seg segtop" role="group">${items.map(([k,l])=>`<button data-act="sub" data-key="${key}" data-k="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`; }
+function vTraining(){
+  const draft=getDraft(); if(draft) return vDraft(draft);
+  if(ui.editPlan && planDraft) return vPlanEdit(planDraft);
+  const sub = ["start","plaene"].includes(ui.trainSub)?ui.trainSub:"start";
+  return segBar("trainSub",[["start","Starten"],["plaene","Pläne"]],sub) + (sub==="plaene"?vPlaene():vTrainStart());
+}
+
+/* ---------- recovery score (simplified, own baseline) ---------- */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function recovery(){
+  const g=lastNight(); if(!g) return null;
+  const rows=S.garmin.filter(x=>x.date!==g.date && x.date>=daysAgo(30));
+  const hv=rows.map(x=>x.hrv).filter(v=>v>0), rv=rows.map(x=>x.rhr).filter(v=>v>0);
+  const parts=[];
+  const sS=clamp((g.sleepH-4)/(SLEEP_GOAL-4),0,1)*100;
+  parts.push({k:"Schlaf",v:sS,w:.4,txt:fmtH(g.sleepH)});
+  const MINB=5;
+  if(g.hrv && hv.length>=MINB){ const b=median(hv); parts.push({k:"HRV",v:clamp(50+(g.hrv/b-1)*250,0,100),w:.35,txt:`${g.hrv} ms (Basis ${Math.round(b)})`}); }
+  if(g.rhr && rv.length>=MINB){ const b=median(rv); parts.push({k:"Ruhepuls",v:clamp(50-(g.rhr-b)*10,0,100),w:.25,txt:`${g.rhr} bpm (Basis ${Math.round(b)})`}); }
+  const wsum=parts.reduce((a,p)=>a+p.w,0);
+  let score=Math.round(parts.reduce((a,p)=>a+p.v*p.w,0)/wsum);
+  const recent=nights().filter(x=>x.date>=daysAgo(3)).slice(0,3);
+  const shortN=recent.filter(x=>x.sleepH<6).length;
+  if(shortN>=2) score=Math.min(score,33);
+  const level = score>=67?0 : score>=50?1 : score>=34?2 : 3;
+  const T=[
+    {c:"good", t:"Bereit für Fortschritt", d:"Gut erholt. Ein guter Tag, um Gewicht oder Wiederholungen zu steigern."},
+    {c:"warn", t:"Normal trainieren, nichts erzwingen", d:"Trainiere wie geplant, aber versuch keine neuen Rekorde, wenn es sich schwer anfühlt."},
+    {c:"warn", t:"Weniger Volumen", d:"Mach pro Übung einen Satz weniger und bleib bei 2–3 Wiederholungen in Reserve. Hyrox oder harte Läufe besser auf einen erholten Tag verschieben."},
+    {c:"bad", t:"Leichter Tag", d:"Lockeres Training, Technik, Spazieren oder Pause. Heute Abend früh ins Bett."}
+  ][level];
+  return {g,score,level,parts,shortN,baseN:Math.min(hv.length,rv.length),needB:MINB,...T};
+}
+function ring(score,color){
+  const r=54, c=2*Math.PI*r, off=c*(1-score/100);
+  return `<svg class="ring" viewBox="0 0 132 132" role="img" aria-label="Erholung ${score} von 100"><circle cx="66" cy="66" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="12"/><circle cx="66" cy="66" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 66 66)"/><text x="66" y="68" text-anchor="middle" dominant-baseline="middle" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-weight="700" font-size="44" fill="var(--fg)">${score}</text><text x="66" y="96" text-anchor="middle" font-size="11" fill="var(--muted)" letter-spacing="1.5">ERHOLUNG</text></svg>`;
+}
+function recoveryCard(){
+  const r=recovery();
+  if(!r) return `<section class="card"><h2>Erholung</h2><p class="small muted">Noch keine Schlafdaten von letzter Nacht. Sobald der Garmin-Abgleich läuft, siehst du hier deinen Erholungswert.</p></section>`;
+  const col = r.c==="good"?"var(--good)":r.c==="bad"?"var(--bad)":"var(--warn)";
+  return `<section class="card hero">
+    <div class="hero-top">${ring(r.score,col)}
+      <div class="hero-tx"><div class="eyebrow" style="color:${col}">${r.score>=67?"Grün":r.score>=34?"Gelb":"Rot"} · ${fmtDate(r.g.date)}</div><h2>${r.t}</h2><p class="small">${r.d}</p></div></div>
+    <div class="parts">${r.parts.map(p=>`<div class="part"><span class="small muted">${p.k}</span><div class="bar"><i style="width:${Math.round(p.v)}%;background:${p.v>=67?"var(--good)":p.v>=34?"var(--warn)":"var(--bad)"}"></i></div><span class="small mono">${esc(p.txt)}</span></div>`).join("")}</div>
+    ${r.parts.length<3?`<p class="small muted">Noch nur aus dem Schlaf berechnet. HRV und Ruhepuls fliessen ein, sobald ${r.needB} Nächte als Basis da sind (jetzt ${r.baseN}).</p>`:""}
+    ${r.shortN>=2?`<p class="small muted">${r.shortN} der letzten 3 Nächte unter 6 Stunden, deshalb höchstens Rot.</p>`:""}
+    <details class="mini"><summary class="small muted">Wie wird das berechnet?</summary><div><p class="small muted">Vereinfachte, offene Formel: Schlafdauer (40 %), HRV (35 %) und Ruhepuls (25 %) im Vergleich zu deinem eigenen 30-Tage-Median. Keine medizinische Aussage. Grundlage für die Schlafwirkung: Craven et al. 2022, Lamon et al. 2021.</p></div></details>
+  </section>`;
+}
+
+/* ---------- week strip ---------- */
+function actsOn(d){
+  const out=[];
+  const g=S.garmin.find(x=>x.date===d);
+  (g?.activities||[]).forEach(a=>out.push(/run|lauf/i.test(a.type||"")?"lauf":/hiit|hyrox|cross|cardio/i.test((a.type||"")+(a.name||""))?"hyrox":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":"other"));
+  S.logs.filter(l=>l.date===d).forEach(l=>{ const k=/hyrox/i.test(l.planName||"")?"hyrox":/lauf/i.test(l.planName||"")?"lauf":"kraft"; if(!out.includes(k)) out.push(k); });
+  S.runs.filter(r=>r.date===d).forEach(()=>{ if(!out.includes("lauf")) out.push("lauf"); });
+  return [...new Set(out)];
+}
+function weekStrip(){
+  const wk=isoWeek(); const w=S.weeks[wk]||{}; const days=weekDates(0); const lab=["Mo","Di","Mi","Do","Fr","Sa","So"]; const today=todayStr();
+  const col={kraft:"var(--c-kraft)",lauf:"var(--c-lauf)",hyrox:"var(--c-hyrox)",other:"var(--muted)"};
+  const done=days.filter(d=>actsOn(d).length).length;
+  return `<section class="card">
+    <div class="row between"><h2>Diese Woche</h2><span class="pill acc">${done}${w.days?" / "+w.days:""} Trainings</span></div>
+    <div class="wstrip">${days.map((d,i)=>{ const a=actsOn(d); const planned=(w.weekdays||[]).includes(lab[i]);
+      return `<div class="wd${d===today?" today":""}${d>today?" fut":""}"><span class="wl">${lab[i]}</span><span class="wc${a.length?" on":""}${planned&&!a.length?" plan":""}" style="${a.length?`background:${col[a[0]]}`:""}">${new Date(d+"T12:00:00").getDate()}</span><span class="wdots">${a.map(k=>`<i style="background:${col[k]}"></i>`).join("")}</span></div>`; }).join("")}</div>
+    <div class="legend small muted"><span><i style="background:var(--c-kraft)"></i>Kraft</span><span><i style="background:var(--c-lauf)"></i>Laufen</span><span><i style="background:var(--c-hyrox)"></i>Hyrox/HIIT</span><span><i class="ring-i"></i>geplant</span></div>
+  </section>`;
+}
+
+/* ---------- next training ---------- */
+function nextTrainingCard(){
+  const pv=prof().vacation;
+  if(pv && pv.on) return `<section class="card vac"><div class="row between"><h2>Ferienmodus</h2><span class="pill">seit ${fmtDate(pv.since)}</span></div><p class="small">Geniess die Pause. Statistiken und Wochen-Check-in laufen weiter, aber ohne Trainingsvorgaben. Ausschalten im Coach-Tab.</p></section>`;
+  const kraft=S.plans.filter(p=>(p.kind||"kraft")==="kraft" && (p.exercises||[]).length).sort((a,b)=>(a.order??99)-(b.order??99));
+  if(!kraft.length) return "";
+  const lastLog=S.logs.find(l=>l.planId && kraft.some(p=>p.id===l.planId));
+  let next=kraft[0];
+  if(lastLog){ const i=kraft.findIndex(p=>p.id===lastLog.planId); next=kraft[(i+1)%kraft.length]; }
+  const r=recovery();
+  const adj = r && r.level>=2 ? `<p class="small" style="color:var(--warn)">Heute angepasst: pro Übung einen Satz weniger.</p>` : "";
+  const todayDone = actsOn(todayStr()).length>0;
+  return `<section class="card next">
+    <div class="eyebrow">${todayDone?"Heute schon trainiert · als Nächstes":"Als Nächstes"}</div>
+    <div class="row between"><div style="min-width:0"><h2 class="big">${esc(next.name)}</h2><span class="small muted">${next.exercises.length} Übungen · ${next.exercises.slice(0,3).map(e=>esc(e.name)).join(", ")}${next.exercises.length>3?" …":""}</span></div></div>
+    ${adj}
+    <button class="primary" data-act="start" data-id="${esc(next.id)}">Training starten</button>
+    ${lastLog?`<p class="small muted">Zuletzt: ${esc(lastLog.planName)} am ${fmtDate(lastLog.date)}</p>`:""}
+  </section>`;
+}
+
+/* ---------- sleep planner ---------- */
+function sleepPlanCard(){
+  const n=nights().filter(x=>x.sleepEnd && x.date>=daysAgo(13)).slice(0,7);
+  const wk=weekDates(0); const have=nights().filter(x=>wk.includes(x.date));
+  const debt=have.reduce((a,b)=>a+Math.max(0,SLEEP_GOAL-b.sleepH),0);
+  if(!n.length && !have.length) return "";
+  const wake = n.length ? n.reduce((a,x)=>a+hm2min(x.sleepEnd),0)/n.length : null;
+  const target = wake!=null ? wake+1440-(SLEEP_GOAL*60+15) : null;
+  const avgBed = n.length ? n.reduce((a,x)=>a+bedMin(x.sleepStart),0)/n.length : null;
+  return `<section class="card">
+    <div class="row between"><h2>Heute Abend</h2><button class="tiny ghost" data-act="goto" data-tab="fortschritt" data-sub="erholung">Schlafdetails →</button></div>
+    <div class="grid2">
+      ${stat("Ins Bett spätestens", target!=null?min2hm(target):"–", target!=null?`für ${SLEEP_GOAL} h Schlaf`:"noch keine Aufwachzeit")}
+      ${stat("Zuletzt Ø eingeschlafen", avgBed!=null?min2hm(avgBed):"–", "Uhr")}
+      ${stat("Schlafdefizit", fmtH(debt), `diese Woche unter ${SLEEP_GOAL} h`)}
+    </div>
+    ${avgBed!=null&&target!=null&&avgBed>target+20?`<p class="small muted">Du schläfst im Schnitt ${Math.round(avgBed-target)} min später ein als nötig. Koffein nach etwa 14 Uhr und Bildschirm im Bett sind häufige Gründe.</p>`:""}
+  </section>`;
+}
+
+/* ---------- training load ---------- */
+function weekMinutes(wkKey){
+  let min=0, n=0;
+  const days=new Set();
+  S.garmin.forEach(g=>{ if(isoWeek(g.date)!==wkKey) return; (g.activities||[]).forEach(a=>{ min+=a.min||0; n++; days.add(g.date); }); });
+  S.logs.forEach(l=>{ if(isoWeek(l.date)!==wkKey) return; const g=S.garmin.find(x=>x.date===l.date); const hasG=(g?.activities||[]).some(a=>/strength|kraft/i.test((a.type||"")+(a.name||""))); if(!hasG){ min+=l.durationMin||60; n++; days.add(l.date); } });
+  S.runs.forEach(r=>{ if(isoWeek(r.date)!==wkKey) return; min+=r.min||0; n++; days.add(r.date); });
+  const sets=S.logs.filter(l=>isoWeek(l.date)===wkKey).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+(e.sets||[]).length,0),0);
+  return {min:Math.round(min), n, days:days.size, sets};
+}
+function loadCard(){
+  const keys=[]; for(let i=5;i>=0;i--) keys.push(isoWeek(daysAgo(i*7)));
+  const data=keys.map(k=>({k,...weekMinutes(k)}));
+  const cur=data.at(-1); const prev=data.slice(0,-1).filter(d=>d.min>0).slice(-4);
+  const avg=prev.length?prev.reduce((a,d)=>a+d.min,0)/prev.length:null;
+  const dow=((new Date().getDay()+6)%7)+1; /* 1..7 */
+  const proj = cur.min/dow*7;
+  let label="–", c="";
+  if(avg){ const ratio=cur.min/avg; label = ratio<0.8?"weniger als sonst":ratio<=1.2?"ähnlich wie sonst":ratio<=1.5?"mehr als sonst":"deutlich mehr als sonst"; c= ratio>1.5?"bad":ratio>1.2?"warn":"good"; }
+  const max=Math.max(60,...data.map(d=>d.min));
+  const pv=prof().vacation;
+  return `<section class="card">
+    <div class="row between"><h2>Trainingszeit</h2>${avg?`<span class="pill ${c}">${label}</span>`:""}</div>
+    <div class="grid2">
+      ${stat("Diese Woche", cur.min, "Trainingsminuten")}
+      ${stat("Schnitt 4 Wochen", avg?Math.round(avg):"–", "Minuten pro Woche")}
+      ${stat("Einheiten", cur.n, `an ${cur.days} Tagen${cur.sets?` · ${cur.sets} Sätze`:""}`)}
+    </div>
+    <div class="loadbars">${data.map(d=>`<div class="lb"><div class="lbcol"><i style="height:${Math.round(d.min/max*100)}%;${d===cur?"background:var(--accent)":""}"></i></div><span>W${d.k.slice(-2)}</span></div>`).join("")}</div>
+    <p class="small muted">${pv&&pv.on?"Ferienmodus aktiv: weniger Belastung ist gewollt. ":""}Grobe Orientierung: Sprünge von mehr als etwa 50 % gegenüber deinem Schnitt erhöhen eher das Risiko für Überlastung, die Studienlage dazu ist aber umstritten.</p>
+  </section>`;
+}
+
+/* ---------- today ---------- */
+
+/* ===== strain (Banister TRIMP, mapped to 0–21, non-linear) ===== */
+const AGE = new Date().getFullYear()-2002;
+const HRMAX = Math.round(208-0.7*AGE); /* Tanaka 2001 estimate */
+function rhrRef(){ const v=S.garmin.filter(x=>x.rhr>0 && x.sleepH!=null && x.date>=daysAgo(30)).map(x=>x.rhr); return median(v)||55; }
+function trimp(min,avg){ if(!min||!avg) return 0; const r=rhrRef(); const x=clamp((avg-r)/(HRMAX-r),0,1); return min*x*0.64*Math.exp(1.92*x); }
+const to21 = t => 21*(1-Math.exp(-t/81));
+function dayStrain(d){
+  const items=[];
+  const g=S.garmin.find(x=>x.date===d);
+  (g?.activities||[]).forEach(a=>{ const t=trimp(a.min, a.avgHr||(a.type&&/strength/.test(a.type)?110:130)); items.push({name:a.name||a.type, start:a.start, min:a.min, t, kind:/run|lauf/i.test(a.type||"")?"lauf":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":/hiit|hyrox/i.test((a.type||"")+(a.name||""))?"hyrox":"other"}); });
+  S.runs.filter(r=>r.date===d).forEach(r=>{ const t=trimp(r.min||r.km*6, 150); items.push({name:"Lauf (manuell)", min:r.min, t, kind:"lauf"}); });
+  const sets=S.logs.filter(l=>l.date===d).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+(e.sets||[]).filter(s=>num(s.r)>0).length,0),0);
+  if(sets) items.push({name:"Harte Sätze (Muskelbelastung)", sets, t:sets*1.2, kind:"kraft"});
+  /* Alltag: Schritte ausserhalb der Trainings, als lockeres Gehen (~100 Schritte/min bei ~33 % Herzfrequenzreserve) */
+  if(g && g.steps>0){
+    const actSteps=(g.activities||[]).reduce((a,x)=>a+(x.steps!=null?+x.steps:(/run|walk|treadmill|hik/i.test(x.type||"")&&x.km?x.km*1300:0)),0);
+    const free=Math.max(0,g.steps-actSteps); const mins=free/100; const x=0.33;
+    if(free>0) items.push({name:"Alltag", steps:Math.round(free), min:mins, t:mins*x*0.64*Math.exp(1.92*x), kind:"alltag"});
+  }
+  const total=items.reduce((a,i)=>a+i.t,0);
+  return {strain:Math.round(to21(total)*10)/10, items:items.map(i=>({...i, s:Math.round(to21(i.t)*10)/10}))};
+}
+function strainTarget(level){ return [[12,16],[10,13],[7,10],[0,7]][level??1]; }
+const strainBand = s => s>=18?"Maximal":s>=14?"Hoch":s>=10?"Moderat":"Leicht";
+const fmt1 = v => String(v).replace(".",",");
+
+/* ===== triple rings ===== */
+function rings3(strain, rec, sleepPct, recCol){
+  const R=[{r:64,v:strain/21,c:"var(--c-strain)"},{r:47,v:(rec??0)/100,c:recCol||"var(--good)"},{r:30,v:Math.min(1,sleepPct/100),c:"var(--c-sleep)"}];
+  return `<svg class="rings" viewBox="0 0 150 150" role="img" aria-label="Belastung, Erholung und Schlaf">${R.map(x=>{ const c=2*Math.PI*x.r; return `<circle cx="75" cy="75" r="${x.r}" fill="none" stroke="${x.c}" stroke-opacity=".22" stroke-width="14"/><circle cx="75" cy="75" r="${x.r}" fill="none" stroke="${x.c}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c*(1-clamp(x.v,0,1))).toFixed(1)}" transform="rotate(-90 75 75)"/>`; }).join("")}</svg>`;
+}
+const I2 = {
+  chev:'<svg class="chev-r" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l6 6-6 6"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.3-9.3C1.4 8.4 3.6 5 7 5c2 0 3.3 1 5 3 1.7-2 3-3 5-3 3.4 0 5.6 3.4 4.3 6.7C19.5 16.4 12 21 12 21z"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  dumb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 10v4M21 10v4M6 7v10M18 7v10M6 12h12"/></svg>',
+  run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2 1 4M11 15l1-5 4 3 3 1M12 10l-4 1-2 3"/></svg>',
+  scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M9 9l3 3 3-3"/></svg>',
+  bed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 18V7M3 13h18v5M7 13V10h6a3 3 0 0 1 3 3"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19h16M7 15v-4M12 15V7M17 15v-6"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5S9 10 10 10c0-3 2-8 2-8z"/></svg>'
+};
+const grow = (icon,color,title,sub,val,act) => `<${act?`button data-act="${act[0]}"${act[1]?` data-key="${act[1]}"`:""}${act[2]!=null?` data-k="${act[2]}"`:""}${act[3]?` data-tab="${act[3]}" data-sub="${act[4]||""}"`:""}`:"div"} class="grow${icon?"":" noicon"}">${icon?`<span class="gicon" style="background:${color}">${icon}</span>`:""}<span class="gt"><b>${title}</b>${sub?`<span>${sub}</span>`:""}</span>${val!=null?`<span class="gv">${val}</span>`:""}${act?I2.chev:""}</${act?"button":"div"}>`;
+
+/* ===== new Heute ===== */
+function ringsCard(){
+  const r=recovery(); const today=todayStr();
+  const ds=dayStrain(today);
+  const level=r?r.level:null; const tgt=strainTarget(level??1);
+  const ln=lastNight(); const sleepPct=ln?Math.round(ln.sleepH/SLEEP_GOAL*100):0;
+  const recCol = !r?"var(--muted)":r.c==="good"?"var(--good)":r.c==="bad"?"var(--bad)":"var(--plate-yellow)";
+  const inT = ds.strain>=tgt[0] && ds.strain<=tgt[1];
+  return `<section class="card">
+    <div class="rings-wrap">${rings3(ds.strain, r?r.score:0, sleepPct, recCol)}
+      <div class="rlegend">
+        <div class="rl"><span class="k" style="color:var(--c-strain)">Belastung</span><span class="v">${fmt1(ds.strain)}<small>/ 21</small></span><span class="s">Ziel ${tgt[0]}–${tgt[1]}${inT?" · erreicht ✓":ds.strain>tgt[1]?" · überschritten":""}</span></div>
+        <div class="rl"><span class="k" style="color:${recCol}">Erholung</span><span class="v">${r?r.score:"–"}<small>%</small></span></div>
+        <div class="rl"><span class="k" style="color:var(--c-sleep)">Schlaf</span><span class="v">${ln?fmtH(ln.sleepH).replace(" h ",":").replace(/^(\d+):/,"$1:"):"–"}<small>${ln?sleepPct+" %":""}</small></span></div>
+      </div></div>
+    ${r?`<div class="verdict"><span class="dot" style="background:${recCol}"></span><div><b>${r.t}</b><p class="small muted">${r.d}</p></div></div>`:""}
+    <details class="info-d"><summary>Details und Berechnung</summary><div style="padding-top:8px">
+      ${r?`<div class="parts">${r.parts.map(p=>`<div class="part"><span class="small muted">${p.k}</span><div class="bar"><i style="width:${Math.round(p.v)}%;background:${p.v>=67?"var(--good)":p.v>=34?"var(--warn)":"var(--bad)"}"></i></div><span class="small">${esc(p.txt)}</span></div>`).join("")}</div>`:""}
+      ${r&&r.parts.length<3?`<p class="small muted">HRV und Ruhepuls zählen ab ${r.needB} Nächten Basis (jetzt ${r.baseN}).</p>`:""}
+      <p class="small muted"><b>Belastung</b> (0–21): Dauer × Puls im Verhältnis zu Ruhepuls (${rhrRef()}) und geschätztem Maximalpuls (${HRMAX}), hohe Pulse zählen überproportional (Banister-TRIMP). Harte Sätze aus deinem Log zählen zusätzlich, weil der Puls Krafttraining unterschätzt. Auch Bewegung im Alltag zählt: Schritte ausserhalb der Trainings werden als lockeres Gehen gerechnet (etwa 5000 Schritte ≈ 4, 10 000 ≈ 8). Nicht linear: von 10 auf 20 ist viel schwerer als von 0 auf 10. Das Ziel richtet sich nach deiner Erholung.</p>
+      <p class="small muted"><b>Erholung</b>: Schlaf 40 %, HRV 35 %, Ruhepuls 25 %, verglichen mit deinem 30-Tage-Median. <b>Schlaf</b>: Prozent von ${SLEEP_GOAL} Stunden. Vereinfachte, offene Formeln, keine medizinische Aussage.</p>
+    </div></details>
+  </section>`;
+}
+function todayActivities(){
+  const ds0=dayStrain(todayStr()); const ds={...ds0, items:ds0.items.filter(i=>i.kind!=="alltag")};
+  if(!ds.items.length) return "";
+  const col={kraft:"var(--c-kraft)",lauf:"var(--c-lauf)",hyrox:"var(--c-hyrox)",other:"#8E8E93"};
+  const ic={kraft:I2.dumb,lauf:I2.run,hyrox:I2.flame,other:I2.bolt};
+  return `<div class="sechead">Heute erledigt</div><div class="glist">${ds.items.map(i=>grow(ic[i.kind],col[i.kind],esc(i.name),[i.start,i.min?Math.round(i.min)+" min":"",i.sets?i.sets+" Sätze":""].filter(Boolean).join(" · "),fmt1(i.s))).join("")}</div>`;
+}
+function nextRow(){
+  const pv=prof().vacation;
+  if(pv&&pv.on) return `<div class="glist">${grow(I2.moon,"var(--c-ruhe)","Ferienmodus aktiv","seit "+fmtDate(pv.since)+" · keine Trainingsvorgaben",null,["goto",null,null,"coach"])}</div>`;
+  const kraft=S.plans.filter(p=>(p.kind||"kraft")==="kraft" && (p.exercises||[]).length).sort((a,b)=>(a.order??99)-(b.order??99));
+  if(!kraft.length) return "";
+  const lastLog=S.logs.find(l=>l.planId && kraft.some(p=>p.id===l.planId));
+  let next=kraft[0]; if(lastLog){ const i=kraft.findIndex(p=>p.id===lastLog.planId); next=kraft[(i+1)%kraft.length]; }
+  const r=recovery(); const adj=r&&r.level>=2?" · heute 1 Satz weniger":"";
+  /* coach-planned session overrides rotation until its date has passed or it was done */
+  const ps=prof().planned; const today=todayStr();
+  if(ps && ps.planId && ps.date>=today && !S.logs.some(l=>l.date===ps.date && l.planId===ps.planId)){
+    const pp=S.plans.find(x=>x.id===ps.planId);
+    if(pp){ const when=ps.date===today?"Heute":fmtDate(ps.date); const n=(pp.exercises||[]).filter(e=>!(ps.skip||[]).includes(e.name)).length;
+      return `<div class="sechead">Geplant · ${when}${ps.time?" · "+esc(ps.time):""}</div><section class="card next" style="gap:10px">
+      <div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><h2>${esc(pp.name)}</h2><span class="small muted">${n} Übungen${ps.rir?" · "+esc(ps.rir):""}${adj}</span></div>
+      <button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="start" data-id="${esc(pp.id)}" data-planned="1">Start</button></div>
+      ${ps.note?`<p class="small muted">${esc(ps.note)}</p>`:""}</section>`; }
+  }
+  /* nach Push folgt ein freier Tag (Ruhetag, Hyrox oder Beine), solange Beine noch keine Übungen hat */
+  if(lastLog && lastLog.planId==="push" && next.id!=="beine"){
+    const since=Math.round((new Date(today+"T12:00:00")-new Date(lastLog.date+"T12:00:00"))/864e5);
+    const flexDone=S.logs.some(l=>l.date>lastLog.date && l.date<=today && l.planId && !kraft.some(p=>p.id===l.planId)) || allRuns().some(r=>r.date>lastLog.date && r.date<=today);
+    if(since<=1 && !flexDone){
+      const hy=S.plans.find(p=>p.id==="hyrox");
+      return `<div class="sechead">Als Nächstes</div><section class="card next" style="gap:10px">
+      <div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><h2>Ruhetag, Hyrox oder Beine</h2><span class="small muted">danach ${esc(next.name)}</span></div>
+      ${hy?`<button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="start" data-id="hyrox">Hyrox</button>`:""}</div></section>`;
+    }
+  }
+  return `<div class="sechead">Als Nächstes</div><section class="card next" style="gap:10px">
+    <div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><h2>${esc(next.name)}</h2><span class="small muted">${next.exercises.length} Übungen${adj}</span></div>
+    <button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="start" data-id="${esc(next.id)}">Start</button></div></section>`;
+}
+function weekStripCompact(){
+  const wk=isoWeek(); const w=S.weeks[wk]||{}; const days=weekDates(0); const lab=["M","D","M","D","F","S","S"], lab2=["Mo","Di","Mi","Do","Fr","Sa","So"]; const today=todayStr();
+  const col={kraft:"var(--c-kraft)",lauf:"var(--c-lauf)",hyrox:"var(--c-hyrox)",other:"#8E8E93"};
+  const done=days.filter(d=>actsOn(d).length).length;
+  return `<div class="sechead">Diese Woche · ${done}${w.days?" von "+w.days:""} Trainings</div><section class="card" style="padding:12px 10px">
+    <div class="wstrip">${days.map((d,i)=>{ const a=actsOn(d); const planned=(w.weekdays||[]).includes(lab2[i]);
+      return `<div class="wd${d===today?" today":""}${d>today?" fut":""}"><span class="wl">${lab[i]}</span><span class="wc${a.length?" on":""}${planned&&!a.length?" plan":""}" style="${a.length?`background:${col[a[0]]}`:""}">${new Date(d+"T12:00:00").getDate()}</span><span class="wdots">${a.slice(1).map(k=>`<i style="background:${col[k]}"></i>`).join("")}</span></div>`; }).join("")}</div></section>`;
+}
+function eveningList(){
+  const n=nights().filter(x=>x.sleepEnd && x.date>=daysAgo(13)).slice(0,7);
+  const wk=weekDates(0); const have=nights().filter(x=>wk.includes(x.date));
+  const debt=have.reduce((a,b)=>a+Math.max(0,SLEEP_GOAL-b.sleepH),0);
+  const wake = n.length ? n.reduce((a,x)=>a+hm2min(x.sleepEnd),0)/n.length : null;
+  const target = wake!=null ? wake+1440-(SLEEP_GOAL*60+15) : null;
+  const mins=weekMinutes(isoWeek()).min;
+  return `<div class="sechead">Heute Abend</div><div class="glist">
+    ${grow(I2.bed,"var(--c-sleep)","Ins Bett bis",target!=null?`für ${SLEEP_GOAL} h Schlaf`:"sobald Aufwachzeiten da sind",target!=null?min2hm(target):"–",["goto",null,null,"fortschritt","erholung"])}
+    ${grow(I2.moon,"#5E5CE6","Schlafdefizit",`diese Woche unter ${SLEEP_GOAL} h`,fmtH(debt),["goto",null,null,"fortschritt","erholung"])}
+    ${grow(I2.chart,"var(--c-strain)","Trainingszeit diese Woche","im Vergleich zu deinem Schnitt",mins+" min",["goto",null,null,"fortschritt","belastung"])}
+  </div>`;
+}
+function vToday(){
+  return `${ringsCard()}${weekBanner()}${nextRow()}${todayActivities()}${stepsRow()}${kcalRow()}${weekStripCompact()}${eveningList()}`;
+}
+
+/* ===== Fortschritt: Health-style summary + detail ===== */
+function tile(k,color,icon,title,val,unit,sub){
+  return `<button class="tile" data-act="sub" data-key="progSub" data-k="${k}"><span class="tt" style="color:${color}">${icon}${title}</span><span class="tv">${val}<small>${unit||""}</small></span><span class="ts">${sub||""}</span></button>`;
+}
+function progressSummary(){
+  /* strength */
+  const names=[...new Set(S.logs.flatMap(l=>(l.entries||[]).map(e=>e.name)))];
+  let kVal="–",kSub="Noch keine Trainings";
+  if(names.length){ const cnt=n=>S.logs.filter(l=>(l.entries||[]).some(e=>e.name===n)).length; const top=names.sort((a,b)=>cnt(b)-cnt(a))[0];
+    const best=l=>{ const e=(l.entries||[]).find(x=>x.name===top); return e?Math.max(0,...e.sets.map(s=>e1rm(num(s.w)||0,num(s.r)||0))):0; };
+    const ls=S.logs.filter(l=>(l.entries||[]).some(e=>e.name===top)); kVal=Math.round(best(ls[0])); kSub=`${top} · gesch. 1RM`; if(ls.length>1){ const d=best(ls[0])-best(ls.at(-1)); kSub+=` · ${d>=0?"+":""}${Math.round(d)} kg`; } }
+  const bw=bwSorted(); const last=bw.at(-1);
+  const sp=setsPerMuscle(daysAgo(6)); const inBand=MAIN_MUSCLES.slice(0,9).filter(m=>(sp[m]||0)>=10&&(sp[m]||0)<=20).length;
+  const wk=weekDates(0); const have=nights().filter(x=>wk.includes(x.date)); const avgS=have.length?have.reduce((a,b)=>a+b.sleepH,0)/have.length:null;
+  const km=allRuns().filter(r=>isoWeek(r.date)===isoWeek()).reduce((a,r)=>a+(+r.km||0),0);
+  const wm=weekMinutes(isoWeek());
+  const strains=wk.filter(d=>d<=todayStr()).map(d=>dayStrain(d).strain); const avgStrain=strains.length?strains.reduce((a,b)=>a+b,0)/strains.length:0;
+  return `<div class="tiles">
+    ${tile("kraft","var(--c-kraft)",I2.dumb,"Kraft",kVal,kVal==="–"?"":"kg",kSub)}
+    ${tile("muskeln","var(--c-veg)",I2.chart,"Sätze pro Muskel",inBand,"/ 9","im Zielbereich 10–20")}
+    ${tile("gewicht","var(--c-prot)",I2.scale,"Gewicht",last?fmt1(last.kg.toFixed(1)):"–",last?"kg":"",last?"zuletzt "+fmtDate(last.date):"noch nichts eingetragen")}
+    ${tile("erholung","var(--c-sleep)",I2.moon,"Schlaf",avgS?fmtH(avgS).replace(" h ",":"):"–","",avgS?"Ø diese Woche":"keine Daten")}
+    ${tile("belastung","var(--c-strain)",I2.bolt,"Belastung",fmt1(Math.round(avgStrain*10)/10),"/ 21",`Ø pro Tag · ${wm.min} min Training`)}
+    ${tile("laufen","var(--c-lauf)",I2.run,"Laufen",fmt1(km.toFixed(1)),"km","diese Woche")}
+    ${(()=>{ const t=stepsOn(todayStr()); const l7=[1,2,3,4,5,6,7].map(i=>stepsOn(daysAgo(i))).filter(v=>v!=null); const a=l7.length?l7.reduce((x,y)=>x+y,0)/l7.length:null; return tile("schritte","var(--c-veg)",'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 3c1.7 0 3 2 3 4.5S9.7 12 8 12 5 10 5 7.5 6.3 3 8 3zm-2 11h4v2.5a2 2 0 0 1-4 0zM16 7c1.7 0 3 2 3 4.5S17.7 16 16 16s-3-2-3-4.5S14.3 7 16 7zm-2 11h4v1.5a2 2 0 0 1-4 0z"/></svg>',"Schritte",t!=null?fmtInt(t):"–","",a!=null?`Ø ${fmtInt(a)} · Ziel ${fmtInt(STEP_GOAL)}`:`Ziel ${fmtInt(STEP_GOAL)}`); })()}
+    ${(()=>{ const a=kcalAvg7(); return tile("kalorien",KCAL_COL,I_FLAME,"Kalorien",a?fmtInt(a.t):"–",a?"kcal":"",a?`Ø 7 Tage · ${fmtInt(a.a)} aktiv`:"noch keine Daten"); })()}
+  </div>`;
+}
+function strainWeekCard(){
+  const days=[]; for(let i=13;i>=0;i--) days.push(daysAgo(i));
+  const vals=days.map(d=>({d,s:dayStrain(d).strain}));
+  const w=360,h=150,pad={l:26,r:6,t:10,b:22}; const Y=v=>pad.t+(1-v/21)*(h-pad.t-pad.b); const bw=(w-pad.l-pad.r)/vals.length;
+  const grid=[0,7,14,21].map(v=>`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l-5}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${v}</text>`).join("");
+  const bars=vals.map((x,i)=>{ const X=pad.l+i*bw+bw*.18, W=bw*.64; return `<rect x="${X}" y="${Y(x.s)}" width="${W}" height="${Math.max(0,Y(0)-Y(x.s))}" rx="3" fill="var(--c-strain)" opacity="${x.d===todayStr()?1:.7}"/><text x="${X+W/2}" y="${h-7}" font-size="9" text-anchor="middle" fill="var(--muted)">${new Date(x.d+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short"}).slice(0,2)}</text>`; }).join("");
+  return `<section class="card"><h2>Belastung pro Tag</h2><div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Tagesbelastung 14 Tage">${grid}${bars}</svg></div><p class="small muted">0–9 leicht · 10–13 moderat · 14–17 hoch · 18–21 maximal</p></section>`;
+}
+function vProgress(){
+  const sub=ui.progSub;
+  const titles={kraft:"Kraft",muskeln:"Sätze pro Muskel",gewicht:"Gewicht",erholung:"Schlaf & Erholung",belastung:"Belastung",laufen:"Laufen",schritte:"Schritte",kalorien:"Kalorien"};
+  if(!titles[sub]) return progressSummary();
+  const back=`<button class="backbtn" data-act="sub" data-key="progSub" data-k=""><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M10 2L2 10l8 8"/></svg>Übersicht</button><h2 style="font-size:28px">${titles[sub]}</h2>`;
+  const body = sub==="gewicht"?vBody("gewicht") : sub==="laufen"?vLaufen() : sub==="erholung"?(vSchlaf()+vBody("garmin")) : sub==="belastung"?(strainWeekCard()+loadCard()) : sub==="schritte"?stepsDetail() : sub==="kalorien"?kcalDetail() : vFortschritt(sub);
+  return back+body;
+}
+
+
+const TYPE_DE={running:"Laufen",treadmill_running:"Laufband",trail_running:"Trailrun",floor_climbing:"Treppensteigen",stair_climbing:"Stairmaster",strength_training:"Krafttraining",hiit:"HIIT",indoor_cycling:"Velo indoor",cycling:"Velo",walking:"Gehen",hiking:"Wandern",indoor_rowing:"Rudern",elliptical:"Crosstrainer",cardio:"Cardio",yoga:"Yoga"};
+function kindOf(t,n){ const x=(t||"")+" "+(n||""); return /run|lauf/i.test(x)?"lauf":/strength|kraft/i.test(x)?"kraft":/hiit|hyrox/i.test(x)?"hyrox":"other"; }
+function dayEntries(d){
+  const out=[]; const g=S.garmin.find(x=>x.date===d); const logs=S.logs.filter(l=>l.date===d); const used=new Set();
+  (g?.activities||[]).forEach(a=>{
+    const k=kindOf(a.type,a.name);
+    let title=(a.name && !["Krafttraining","Treadmill Running","Running","Laufen"].includes(a.name))?a.name:(TYPE_DE[a.type]||a.name||"Aktivität");
+    let extra="";
+    if(k==="kraft"){ const l=logs.find(x=>!used.has(x.id)); if(l){ used.add(l.id); title=l.planName||title; const n=(l.entries||[]).reduce((s,e)=>s+(e.sets||[]).length,0); extra=`${(l.entries||[]).length} Übungen · ${n} Sätze`; } }
+    out.push({k,title,start:a.start||"",sub:[a.start,a.min?Math.round(a.min)+" min":"",a.km?fmt1(a.km)+" km":"",a.avgHr?"Ø "+a.avgHr+" bpm":"",extra].filter(Boolean).join(" · "),s:Math.round(to21(trimp(a.min,a.avgHr||(k==="kraft"?110:130)))*10)/10});
+  });
+  logs.filter(l=>!used.has(l.id)).forEach(l=>{ const n=(l.entries||[]).reduce((s,e)=>s+(e.sets||[]).length,0); out.push({k:kindOf(l.planName,l.kind==="cardio"?"cardio":"kraft"),title:l.planName||"Training",start:"",sub:`${(l.entries||[]).length} Übungen · ${n} Sätze · ohne Uhr`,s:null}); });
+  S.runs.filter(r=>r.date===d).forEach(r=>out.push({k:"lauf",title:"Lauf (manuell)",start:"",sub:[fmt1(r.km)+" km",r.min?r.min+" min":""].filter(Boolean).join(" · "),s:null}));
+  return out.sort((a,b)=>(a.start||"99")<(b.start||"99")?-1:1);
+}
+function dayCard(){
+  const t=todayStr(), y=daysAgo(1);
+  const te=dayEntries(t); const useT=te.length>0; const d=useT?t:y; const list=useT?te:dayEntries(y);
+  const col={kraft:"var(--c-kraft)",lauf:"var(--c-lauf)",hyrox:"var(--c-hyrox)",other:"#8E8E93"};
+  const ic={kraft:I2.dumb,lauf:I2.run,hyrox:I2.flame,other:I2.bolt};
+  const head = useT ? "Heute" : `Gestern${te.length?"":" · heute noch nichts"}`;
+  if(!list.length) return `<div class="sechead">Heute und gestern</div><div class="glist">${grow(null,null,"Noch keine Aktivität","Trainings von der Garmin und aus der App erscheinen hier",null)}</div>`;
+  return `<div class="sechead">${head} · ${fmtDate(d)}</div><div class="glist">${list.map(e=>grow(ic[e.k],col[e.k],esc(e.title),esc(e.sub),e.s!=null?fmt1(e.s):null)).join("")}</div>`;
+}
+
+
+/* ===== steps ===== */
+function stepsOn(d){ const g=S.garmin.find(x=>x.date===d); return g&&g.steps!=null?g.steps:null; }
+const fmtInt = n => Math.round(n).toLocaleString("de-CH");
+function stepsRow(){
+  const t=stepsOn(todayStr()); const g=S.garmin.find(x=>x.date===todayStr());
+  const pct=t!=null?Math.min(100,t/STEP_GOAL*100):0;
+  return `<div class="sechead">Schritte</div><button class="glist stepcard" data-act="goto" data-tab="fortschritt" data-sub="schritte">
+    <span class="gicon" style="background:var(--c-veg)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 3c1.7 0 3 2 3 4.5S9.7 12 8 12 5 10 5 7.5 6.3 3 8 3zm-2 11h4v2.5a2 2 0 0 1-4 0zM16 7c1.7 0 3 2 3 4.5S17.7 16 16 16s-3-2-3-4.5S14.3 7 16 7zm-2 11h4v1.5a2 2 0 0 1-4 0z"/></svg></span>
+    <span class="gt"><b>${t!=null?fmtInt(t):"–"} <span style="display:inline;font-size:14px">von ${fmtInt(STEP_GOAL)}</span></b><span class="bar" style="margin-top:6px"><i style="width:${pct}%;background:var(--c-veg)"></i></span>${g&&g.syncedAt?`<span style="margin-top:4px">Stand letzter Abgleich</span>`:""}</span>
+    ${t!=null&&t>=STEP_GOAL?`<span class="gv" style="color:var(--c-veg)">✓</span>`:`<span class="gv">${t!=null?Math.round(pct)+" %":""}</span>`}${I2.chev}
+  </button>`;
+}
+function stepsDetail(){
+  const days=[]; for(let i=13;i>=0;i--) days.push(daysAgo(i));
+  const vals=days.map(d=>({d,v:stepsOn(d)}));
+  const have=vals.filter(x=>x.v!=null && x.d!==todayStr());
+  const last7=have.filter(x=>x.d>=daysAgo(7));
+  const avg=last7.length?last7.reduce((a,x)=>a+x.v,0)/last7.length:null;
+  const hit=last7.filter(x=>x.v>=STEP_GOAL).length;
+  const max=Math.max(STEP_GOAL*1.2,...vals.map(x=>x.v||0));
+  const w=360,h=170,pad={l:30,r:6,t:14,b:22}; const Y=v=>pad.t+(1-v/max)*(h-pad.t-pad.b); const bw=(w-pad.l-pad.r)/vals.length;
+  const grid=[0,5000,10000,15000,20000].filter(v=>v<=max).map(v=>`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l-5}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${v/1000}k</text>`).join("");
+  const bars=vals.map((x,i)=>{ const X=pad.l+i*bw+bw*.18, W=bw*.64; const v=x.v||0; return `<rect x="${X}" y="${Y(v)}" width="${W}" height="${Math.max(0,Y(0)-Y(v))}" rx="3" fill="${v>=STEP_GOAL?"var(--c-veg)":"color-mix(in srgb,var(--c-veg) 45%,var(--surface2))"}"/><text x="${X+W/2}" y="${h-7}" font-size="9" text-anchor="middle" fill="var(--muted)">${new Date(x.d+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short"}).slice(0,2)}</text>`; }).join("");
+  const goal=`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(STEP_GOAL)}" y2="${Y(STEP_GOAL)}" stroke="var(--fg)" stroke-dasharray="5 4" stroke-width="1.5"/>`;
+  return `<section class="card">
+    <div class="grid2">${stat("Heute",stepsOn(todayStr())!=null?fmtInt(stepsOn(todayStr())):"–","Schritte")}${stat("Ø 7 Tage",avg!=null?fmtInt(avg):"–","pro Tag")}${stat("Ziel erreicht",`${hit} / ${last7.length}`,`Tage ≥ ${fmtInt(STEP_GOAL)}`)}</div>
+    <div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Schritte pro Tag">${grid}${bars}${goal}</svg></div>
+    <p class="small muted">Gestrichelte Linie: Ziel ${fmtInt(STEP_GOAL)}. Schritte kommen von der Garmin, der heutige Wert ist der Stand beim letzten Abgleich.</p>
+  </section>`;
+}
+
+/* ===== kalorien (Garmin-Schätzung) ===== */
+const KCAL_COL="#FF9F0A";
+const I_FLAME='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 3-1.2 4.8-2.6 6.4C8 10 7 11.6 7 14a5 5 0 0 0 10 0c0-1.7-.6-3.1-1.5-4.3-.3 1.4-1 2.3-2 2.8.4-3.3-.4-7.4-1.5-10.5z"/></svg>';
+function kcalOn(d){ const g=S.garmin.find(x=>x.date===d); return g&&g.kcal!=null?{t:+g.kcal,a:+(g.kcalActive||0)}:null; }
+function kcalAvg7(){ const l=[1,2,3,4,5,6,7].map(i=>kcalOn(daysAgo(i))).filter(Boolean); return l.length?{t:l.reduce((x,y)=>x+y.t,0)/l.length,a:l.reduce((x,y)=>x+y.a,0)/l.length,n:l.length}:null; }
+function kcalRow(){
+  const k=kcalOn(todayStr());
+  return `<div class="sechead">Kalorien</div><button class="glist stepcard" data-act="goto" data-tab="fortschritt" data-sub="kalorien">
+    <span class="gicon" style="background:${KCAL_COL}">${I_FLAME}</span>
+    <span class="gt"><b>${k?fmtInt(k.t):"–"} <span style="display:inline;font-size:14px">kcal</span></b><span style="margin-top:4px">${k?`davon ${fmtInt(k.a)} aktiv · Garmin-Schätzung, bis letzter Abgleich`:"noch keine Daten"}</span></span>
+    ${I2.chev}
+  </button>`;
+}
+function kcalDetail(){
+  const days=[]; for(let i=13;i>=0;i--) days.push(daysAgo(i));
+  const vals=days.map(d=>({d,k:kcalOn(d)}));
+  const a7=kcalAvg7(); const td=kcalOn(todayStr());
+  const max=Math.max(3500,...vals.map(x=>x.k?x.k.t:0));
+  const w=360,h=170,pad={l:34,r:6,t:14,b:22}; const Y=v=>pad.t+(1-v/max)*(h-pad.t-pad.b); const bw=(w-pad.l-pad.r)/vals.length;
+  const grid=[0,1000,2000,3000,4000].filter(v=>v<=max).map(v=>`<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l-5}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${v?v/1000+"k":0}</text>`).join("");
+  const bars=vals.map((x,i)=>{ const X=pad.l+i*bw+bw*.18, W=bw*.64; const lbl=`<text x="${X+W/2}" y="${h-7}" font-size="9" text-anchor="middle" fill="var(--muted)">${new Date(x.d+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short"}).slice(0,2)}</text>`;
+    if(!x.k) return lbl; const r=x.k.t-x.k.a;
+    return `<rect x="${X}" y="${Y(r)}" width="${W}" height="${Math.max(0,Y(0)-Y(r))}" rx="3" fill="color-mix(in srgb,${KCAL_COL} 35%,var(--surface2))"/><rect x="${X}" y="${Y(x.k.t)}" width="${W}" height="${Math.max(0,Y(r)-Y(x.k.t))}" rx="3" fill="${KCAL_COL}"/>${lbl}`; }).join("");
+  return `<section class="card">
+    <div class="grid2">${stat("Heute",td?fmtInt(td.t):"–","kcal bis jetzt")}${stat("Ø 7 Tage",a7?fmtInt(a7.t):"–","kcal pro Tag")}${stat("Ø aktiv",a7?fmtInt(a7.a):"–","kcal pro Tag")}</div>
+    <div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Kalorienverbrauch pro Tag">${grid}${bars}</svg></div>
+    <p class="small muted">Hell: Ruheumsatz · Kräftig: aktive Kalorien. Werte kommen von der Garmin, heute ist der Stand beim letzten Abgleich.</p>
+  </section>
+  <section class="card"><h2>Wie genau ist das?</h2>
+    <p class="small">Den <b>Ruheumsatz</b> rechnet Garmin aus Gewicht, Grösse, Alter und Geschlecht im Profil. Solche Formeln liegen bei den meisten Erwachsenen innerhalb von etwa ±10 %.</p>
+    <p class="small">Die <b>aktiven Kalorien</b> schätzt die Uhr aus Puls und Bewegung. Das ist der ungenaue Teil: Eine Übersichtsarbeit fand bei allen Uhren-Marken mittlere Fehler über 30 %, bei Garmin-Modellen je nach Studie zwischen etwa −20 % und +50 %. Beim Krafttraining ist es besonders unsicher.</p>
+    <p class="small">Realistisch heisst das für den ganzen Tag etwa <b>±10–15 %</b>, also bei 2700 kcal grob 2300–3100. Zum Vergleichen von Tagen und Wochen taugt es, zum genauen Rechnen nicht.</p>
+  </section>`;
+}
+
+function splitFor(n){
+  const S_ = window.SPLITS||{};
+  const s=S_[n]; if(!s) return "";
+  return `<div class="banner blue"><div class="eyebrow">Empfohlene Aufteilung für ${n} Tage</div><p><b>${esc(s.name)}</b></p><p class="small">${esc(s.days)}</p><p class="small muted">${esc(s.why)}</p></div>`;
+}
+
+/* ---------- interactions ---------- */
+function readDraft(){
+  const d=getDraft(); if(!d) return null;
+  const dd=$("#d_date"); if(dd) d.date=dd.value||d.date;
+  const du=$("#d_dur"); if(du) d.durationMin=num(du.value)||"";
+  const dn=$("#d_note"); if(dn) d.note=dn.value;
+  (d.entries||[]).forEach((e,i)=>e.sets.forEach((s,j)=>{ const w=$(`#s_${i}_${j}_w`),r=$(`#s_${i}_${j}_r`),x=$(`#s_${i}_${j}_x`); if(w) s.w=w.value; if(r) s.r=r.value; if(x) s.rir=x.value; }));
+  return d;
+}
+function readPlanEdit(p){
+  const out={...p}; const n=$("#pe_name"); if(n) out.name=n.value.trim()||p.name;
+  const nt=$("#pe_note"); if(nt) out.note=nt.value;
+  out.exercises=(p.exercises||[]).map((e,i)=>({ name:($(`#pe_${i}_name`)?.value||e.name).trim(), muscle:$(`#pe_${i}_muscle`)?.value||e.muscle, compound: $(`#pe_${i}_comp`) ? $(`#pe_${i}_comp`).value==="1" : isCompound(e), secondary: $(`#pe_${i}_muscle`) ? MAIN_MUSCLES.filter((m,k)=>$(`#pe_${i}_sec_${k}`)?.checked && m!==$(`#pe_${i}_muscle`).value) : secOf(e), metric: $(`#pe_${i}_metric`) ? $(`#pe_${i}_metric`).value : (e.metric||undefined), sets:num($(`#pe_${i}_sets`)?.value)||null, reps:$(`#pe_${i}_reps`)?.value||"", weight:num($(`#pe_${i}_weight`)?.value)||null, note:$(`#pe_${i}_note`)?.value||"" }));
+  return out;
+}
+let planDraft=null;
+
+function bind(){
+  const v=$("#view");
+  v.oninput = (ev)=>{ if(getDraft() && ev.target.closest("#view")) { const d=readDraft(); if(d) setDraft(d); } };
+  v.onchange = async (ev)=>{
+    const t=ev.target;
+    if(t.id==="prog_sel"){ ui.progEx=t.value; lsSet("tb_ui",ui); t.blur(); render(); }
+    if(t.dataset.act==="wdtoggle"){ const wk=isoWeek(); const wd=["Mo","Di","Mi","Do","Fr","Sa","So"]; const sel=wd.filter((d,i)=>$("#wd_"+i).checked); const cur=S.weeks[wk]||{}; await save("weeks/"+wk,{...cur,week:wk,weekdays:sel,days:cur.days||sel.length||null}); }
+    if(/^pe_\d+_(muscle|metric)$/.test(t.id) && planDraft){ planDraft=readPlanEdit(planDraft); t.blur(); renderPlanDraft(); }
+  };
+  v.onclick = async (ev)=>{
+    const b=ev.target.closest("[data-act]"); if(!b || b.tagName==="INPUT") return;
+    const a=b.dataset.act;
+    if(a==="start"){
+      const p=S.plans.find(x=>x.id===b.dataset.id);
+      const d={ id:uid(), date:todayStr(), planId:p?.id||null, planName:p?.name||"Freies Training", kind:p?.kind||"kraft", entries:(p?.exercises||[]).filter(e=>!(b.dataset.planned && (prof().planned?.skip||[]).includes(e.name))).map(e=>({name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||"",secondary:secOf(e),compound:isCompound(e),target:[e.sets?e.sets+"×":"",e.reps||"",e.weight?" @ "+e.weight+" kg":""].join(""),note:e.note||"",sets:Array.from({length:e.sets||3},()=>({w:"",r:"",rir:""}))})) };
+      setDraft(d); if(tab!=="training"){ location.hash="training"; } else { render(); scrollTop(); }
+    }
+    if(a==="cancel"){ const dd=readDraft(); const touched = dd && ((dd.note||"").trim() || (dd.entries||[]).some(e=>e.sets.some(x=>x.w!==""||x.r!==""||(x.rir??"")!==""))); if(!touched) b.dataset.confirm="1";
+      if(b.dataset.confirm){ setDraft(null); setDraft(null); render(); } else { b.dataset.confirm="1"; b.textContent="Eingaben gehen verloren – nochmals tippen"; } }
+    if(a==="addset"){ const d=readDraft(); const e=d.entries[+b.dataset.i]; const l=e.sets.at(-1)||{}; e.sets.push({w:l.w||"",r:"",rir:""}); setDraft(d); render(); }
+    if(a==="rmset"){ const d=readDraft(); d.entries[+b.dataset.i].sets.splice(+b.dataset.j,1); setDraft(d); render(); }
+    if(a==="rmex"){ const d=readDraft(); d.entries.splice(+b.dataset.i,1); setDraft(d); render(); }
+    if(a==="addex"){ const s=$("#d_addsel"); if(!s.value) return; const d=readDraft(); const L=LIBMAP[s.value]; d.entries.push({name:L.name,muscle:L.muscle,metric:metricOf(L),reps:metricOf(L)==="dist"?"":defaultReps(L),secondary:secOf(L),compound:isCompound(L),sets:[{w:"",r:"",rir:""},{w:"",r:"",rir:""},{w:"",r:"",rir:""}]}); setDraft(d); render(); }
+    if(a==="finish"){
+      const d=readDraft();
+      const entries=(d.entries||[]).map(e=>{ const dist=metricOf(e)==="dist"; return {name:e.name,muscle:e.muscle,metric:metricOf(e),secondary:secOf(e),reps:e.reps||"",sets: dist ? e.sets.filter(s=>s.r!==""||(s.rir??"")!=="").map(s=>({m:num(s.r),t:(s.rir||"").trim()||null,w:num(s.w)})) : e.sets.filter(s=>s.w!==""||s.r!=="").map(s=>({w:num(s.w),r:num(s.r),rir:s.rir===""?null:num(s.rir)}))}; }).filter(e=>e.sets.length);
+      if(d.kind!=="cardio" && !entries.length){ toast("Trage mindestens einen Satz oder eine Runde ein"); return; }
+      b.disabled=true;
+      const ok=await save("logs/"+d.id,{date:d.date,planId:d.planId,planName:d.planName,kind:d.kind||"kraft",durationMin:d.durationMin||null,note:d.note||"",entries,savedAt:new Date().toISOString()});
+      if(ok){ setDraft(null); toast("Training gespeichert"); render(); } else b.disabled=false;
+    }
+    if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
+    if(a==="editplan"){ ui.editPlan=b.dataset.id; planDraft=JSON.parse(JSON.stringify(S.plans.find(x=>x.id===ui.editPlan))); renderPlanDraft(); }
+    if(a==="closeplan"){ ui.editPlan=null; planDraft=null; render(); }
+    if(a==="addplanex"){ planDraft=readPlanEdit(planDraft); planDraft.exercises.push(planDraft.kind==="hyrox"?{name:"",muscle:"Ganzkörper",sets:1,reps:""}:{name:"",muscle:"Unbekannt",sets:3,reps:"8-12"}); renderPlanDraft(); }
+    if(a==="delex"){ planDraft=readPlanEdit(planDraft); planDraft.exercises.splice(+b.dataset.i,1); renderPlanDraft(); }
+    if(a==="mvex"){ planDraft=readPlanEdit(planDraft); const i=+b.dataset.i, j=i+(+b.dataset.d); const ex=planDraft.exercises; [ex[i],ex[j]]=[ex[j],ex[i]]; renderPlanDraft(); }
+    if(a==="saveplan"){ const p=readPlanEdit(planDraft); p.exercises=(p.exercises||[]).filter(e=>e.name).map(e=>{ if((!e.muscle||e.muscle==="Unbekannt") && LIBMAP[e.name]) e.muscle=LIBMAP[e.name].muscle; return e; }); const {id,...body}=p; const ok=await save("plans/"+id,body); if(ok){ ui.editPlan=null; planDraft=null; toast("Plan gespeichert"); render(); } }
+    if(a==="delplan"){ if(b.dataset.confirm){ await save("plans/"+b.dataset.id,null,"delete"); ui.editPlan=null; planDraft=null; render(); } else { b.dataset.confirm="1"; b.textContent="Wirklich löschen?"; } }
+    if(a==="newplan"){ const n=$("#np_name").value.trim(); if(!n){ toast("Gib dem Plan einen Namen"); return; } const id="p_"+uid(); const ok=await save("plans/"+id,{name:n,kind:$("#np_kind").value,order:S.plans.length+1,exercises:[]}); if(ok){ ui.editPlan=id; planDraft={id,name:n,kind:$("#np_kind")?.value||"kraft",exercises:[]}; renderPlanDraft(); } }
+    if(a==="addbw"){ const kg=num($("#bw_kg").value), d=$("#bw_date").value||todayStr(); if(!kg||kg<30||kg>250){ toast("Gib ein Gewicht in kg ein"); return; } const ok=await save("bodyweight/"+d,{date:d,kg}); if(ok){ $("#bw_kg").value=""; toast("Gewicht eingetragen"); } }
+    if(a==="sub"){ ui[b.dataset.key]=b.dataset.k; lsSet("tb_ui",ui); render(); scrollTop(); return; }
+    if(a==="goto"){ if(b.dataset.sub) { ui.progSub=b.dataset.sub; lsSet("tb_ui",ui); } if(location.hash.slice(1)===b.dataset.tab){ render(); scrollTop(); } else location.hash=b.dataset.tab; return; }
+    if(a==="vacation"){ const on=!(prof().vacation&&prof().vacation.on); await save("settings/profile",{vacation:{on,since:todayStr()}},"update"); toast(on?"Ferienmodus an":"Ferienmodus aus"); return; }
+    if(a==="shopchk"){ const sh=S.shop; if(!sh) return; const c={...(sh.checked||{})}; c[b.dataset.id]=!c[b.dataset.id]; S.shop={...sh,checked:c}; render(); await save("shopping/current",{checked:c},"update"); return; }
+    if(a==="shopadd"){ const v=$("#shop_new").value.trim(); if(!v||!S.shop) return; const ex=[...(S.shop.extra||[]),v]; S.shop={...S.shop,extra:ex}; render(); await save("shopping/current",{extra:ex},"update"); return; }
+    if(a==="shopbudget"){ const v=num($("#shop_budget").value); if(!v||v<=0){ toast("Gib ein Budget in CHF ein"); return; } await save("settings/profile",{shopBudget:v},"update"); toast("Budget gespeichert"); return; }
+    if(a==="bodysub"){ ui.body=b.dataset.k; lsSet("tb_ui",ui); render(); }
+    if(a==="addsleep"){ const hh=num($("#sl_h").value)||0, mm=num($("#sl_m").value)||0, d=$("#sl_date").value||todayStr(); const h=hh+mm/60; if(h<=0||h>16){ toast("Gib die Schlafdauer ein"); return; } const ok=await save("sleep/"+d,{date:d,h:Math.round(h*100)/100}); if(ok){ toast("Schlaf gespeichert"); } }
+    if(a==="addrun"){ const km=num($("#run_km").value), mi=num($("#run_min").value), d=$("#run_date").value||todayStr(); if(!km||km<=0){ toast("Gib die Distanz in km ein"); return; } const ok=await save("runs/r_"+uid(),{date:d,km,min:mi||null,name:"Lauf"}); if(ok){ toast("Lauf gespeichert"); } }
+    if(a==="delrun"){ if(b.dataset.confirm){ await save("runs/"+b.dataset.id,null,"delete"); } else { b.dataset.confirm="1"; b.textContent="?"; } }
+    if(a==="setdays"){ const wk=isoWeek(); const cur=S.weeks[wk]||{}; await save("weeks/"+wk,{...cur,week:wk,days:+b.dataset.n}); }
+  };
+}
+function renderPlanDraft(){
+  document.activeElement?.blur?.();
+  const v=$("#view"); v.innerHTML=vPlanEdit(planDraft); bind();
+}
+// keep plan edits when db snapshots arrive
+const _vPlaene=vPlaene;
+vPlaene=function(){ if(ui.editPlan && planDraft) return vPlanEdit(planDraft); return _vPlaene(); };
+
+route();
+boot();
+</script>
+</body>
+</html>
