@@ -6,7 +6,7 @@
 <title>Trainingsbuch</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-title" content="Training">
 <meta name="theme-color" content="#000000">
@@ -304,13 +304,11 @@ header.top .pill{background:transparent;padding:0}
 .sheet .f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .pill.bad{color:var(--bad)}
 
-/* Native iOS-Tabbar: ganz unten, volle Breite, Home-Indikator-Bereich inklusive */
-.tabs{left:0;right:0;bottom:0;max-width:none;margin:0;border:0;border-top:.5px solid rgba(255,255,255,.12);border-radius:0;box-shadow:none;background:rgba(18,18,20,.94);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));justify-content:space-around}
-.tabs a{border-radius:0;padding:4px 0 2px;font-size:10px;font-weight:500;gap:3px;max-width:110px}
-.tabs a svg{width:25px;height:25px}
-.tabs a[aria-current="page"]{background:none;color:var(--accent)}
-#scroller{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
-.toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+/* Schwebende Tab-Leiste, aber ganz unten am Bildschirmrand (--vgap korrigiert den iOS-Standalone-Fehler, bei dem der Viewport zu kurz ist) */
+.tabs{bottom:calc(max(8px, env(safe-area-inset-bottom,0px) - 18px) - var(--vgap,0px))}
+#scroller{bottom:calc(0px - var(--vgap,0px));padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px) - var(--vgap,0px))}
+.sheetwrap{bottom:calc(0px - var(--vgap,0px))}
 </style>
 </head>
 <body>
@@ -707,10 +705,21 @@ async function save(path, data, mode="set"){
   try{ await p; return true; }catch(e){ toast(e.code==="quota_exceeded"?"Speicher voll":"Speichern fehlgeschlagen"); return false; }
 }
 
+function fixVgap(){
+  let p=document.getElementById("vprobe");
+  if(!p){ p=document.createElement("div"); p.id="vprobe"; p.style.cssText="position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none"; document.body.appendChild(p); }
+  const r=p.getBoundingClientRect();
+  const standalone=navigator.standalone||matchMedia("(display-mode: standalone)").matches;
+  const portrait=innerHeight>=innerWidth;
+  const sh=portrait?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
+  let g=standalone?Math.round(sh-r.bottom):0; if(g<0||g>140) g=0;
+  window.__vgap=g; document.documentElement.style.setProperty("--vgap",g+"px");
+}
 async function boot(){
   render();
   const db=LDB.db; S.db=db; S.ready=true; S.offline=false;
   LDB.onStatus(setPill); setPill();
+  fixVgap(); addEventListener("resize",fixVgap); addEventListener("orientationchange",()=>setTimeout(fixVgap,300)); setTimeout(fixVgap,500);
   const done=()=>{}; const err=e=>console.error(e);
   db.collection("plans").onSnapshot(s=>{ S.plans=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??99)-(b.order??99)); if(!s.metadata.fromCache) done(); render(); }, err);
   db.collection("logs").orderBy("date","desc").limit(600).onSnapshot(s=>{ S.logs=s.docs.map(d=>({id:d.id,...d.data()})); render(); }, err);
@@ -766,7 +775,7 @@ function syncSheet(){
     <label class="f">Token<input id="sy_token" type="password" value="${esc(st.token)}" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
     <button class="primary" data-save style="margin-top:6px">Speichern &amp; synchronisieren</button>
     <button data-now style="margin-top:8px">Jetzt synchronisieren</button>
-    <p class="small muted" style="margin-top:10px">${LDB.count()} Einträge auf diesem Gerät. Daten liegen offline auf dem Handy und in data.json im privaten Repo.</p>
+    <p class="small muted" style="margin-top:10px">${LDB.count()} Einträge auf diesem Gerät · Bildschirm-Korrektur ${window.__vgap||0} px. Daten liegen offline auf dem Handy und in data.json im privaten Repo.</p>
   </div>`;
   document.body.appendChild(w);
   const close=()=>w.remove();
