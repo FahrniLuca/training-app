@@ -726,7 +726,11 @@ async function boot(){
   db.doc("settings/profile").onSnapshot(d=>{ S.profile=d.exists?d.data():null; render(); }, err);
   if(!LDB.configured()) setTimeout(()=>{ if(!LDB.count()) syncSheet(); },400);
   LDB.runSync();
-  if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol!=="file:"){
+    const hadCtrl=!!navigator.serviceWorker.controller; let reloaded=false;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(hadCtrl && !reloaded && !getDraft()){ reloaded=true; location.reload(); } });
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{ document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") r.update().catch(()=>{}); }); }).catch(()=>{});
+  }
   if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
 }
 function lastSyncTxt(){
