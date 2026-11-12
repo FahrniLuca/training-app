@@ -1678,7 +1678,8 @@ function sessionE1(l,name){ const e=(l.entries||[]).find(x=>x.name===name); if(!
 function courseRows(){
   const rows=[]; const today=todayStr();
   const st={ok:["var(--good)","✓"],warn:["var(--warn)","!"],wait:["#8E8E93","…"]};
-  const add=(k,title,sub,val,tab)=>rows.push({k,title,sub,val,tab});
+  const add=(k,title,sub,val,tab,extra)=>rows.push({k,title,sub,val,tab,extra});
+  const lifts=[];
   /* Kraft: die 4 am häufigsten trainierten Übungen mit Gewicht */
   const cnt={}; S.logs.forEach(l=>(l.entries||[]).forEach(e=>{ if(!/assist/i.test(e.name) && workSets(e).some(x=>num(x.w)>0)) cnt[e.name]=(cnt[e.name]||0)+1; }));
   const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,4);
@@ -1686,28 +1687,40 @@ function courseRows(){
     const ls=S.logs.filter(l=>sessionE1(l,n)>0).sort((a,b)=>a.date<b.date?-1:1); if(!ls.length) return;
     const cur=ls.at(-1); const base=[...ls].reverse().find(l=>l.date<=addDays(cur.date,-21)) || ls[0];
     const now=sessionE1(cur,n), then=sessionE1(base,n); const span=Math.round((new Date(cur.date+"T12:00:00")-new Date(base.date+"T12:00:00"))/864e5);
-    if(base===cur || span<21) add("wait",esc(n),`Startwert ${fmtKg(Math.round(now))} kg (gesch. 1RM) · Vergleich ab ${fmtDate(addDays(ls[0].date,28))}`,null,"kraft");
-    else { const d=(now-then)/then*100; add(d>=1?"ok":d>-3?"wait":"warn",esc(n),`gesch. 1RM ${fmtKg(Math.round(then))} → ${fmtKg(Math.round(now))} kg in ${Math.round(span/7)} Wochen`,(d>=0?"+":"")+fmt1(Math.round(d*10)/10)+" %","kraft"); }
+    if(base===cur || span<21) lifts.push({k:"wait",n,sub:`Startwert ${fmtKg(Math.round(now))} kg (gesch. 1RM)`,from:addDays(ls[0].date,28)});
+    else { const d=(now-then)/then*100; lifts.push({k:d>=1?"ok":d>-3?"wait":"warn",n,up:d>=1,sub:`gesch. 1RM ${fmtKg(Math.round(then))} → ${fmtKg(Math.round(now))} kg in ${Math.round(span/7)} Wochen`,val:(d>=0?"+":"")+fmt1(Math.round(d*10)/10)+" %"}); }
   });
+  if(!lifts.length) add("wait","💪 Stärker","noch keine Trainings mit Gewicht",null,"kraft");
+  else { const cmp=lifts.filter(l=>l.k!=="wait"||l.val!=null); const up=lifts.filter(l=>l.up).length;
+    if(!lifts.some(l=>l.val!=null)) add("wait","💪 Stärker",`${lifts.length} Hauptübungen · Vergleich ab ${fmtDate(lifts.map(l=>l.from).sort()[0])}`,null,"kraft",lifts);
+    else add(up>=Math.ceil(cmp.length/2)?"ok":"warn","💪 Stärker",`${up} von ${cmp.length} Hauptübungen steigen`,null,"kraft",lifts); }
   /* Gewicht */
   const T=bwTrend();
-  if(T.slope==null) add("wait","Gewichtstrend",`noch zu wenig Messungen (${T.n} von 5 in 14 Tagen)`,null,"gewicht");
+  if(T.slope==null) add("wait","⚖️ Fett verlieren",`Gewichtstrend: noch zu wenig Messungen (${T.n} von 5 in 14 Tagen)`,null,"gewicht");
   else { const sl=T.slope; const k=sl<=-0.3&&sl>=-0.6?"ok":(sl<-0.6||sl>0.1)?"warn":"wait";
-    add(k,"Gewichtstrend",k==="ok"?"im Zielbereich −0,3 bis −0,6 kg/Woche":sl<-0.6?"zu schnell, etwas mehr essen":sl>0.1?"steigt, eine Faust Kohlenhydrate weniger":"fast stabil, Ziel −0,3 bis −0,6",(sl>0?"+":"")+fmt1(Math.round(sl*100)/100)+" kg/W","gewicht"); }
+    add(k,"⚖️ Fett verlieren",k==="ok"?"im Zielbereich −0,3 bis −0,6 kg/Woche":sl<-0.6?"zu schnell, etwas mehr essen":sl>0.1?"steigt, eine Faust Kohlenhydrate weniger":"fast stabil, Ziel −0,3 bis −0,6",(sl>0?"+":"")+fmt1(Math.round(sl*100)/100)+" kg/W","gewicht"); }
   /* Sätze pro Muskel */
   const sp=setsPerMuscle(daysAgo(6)); const M=MAIN_MUSCLES.slice(0,9); const inB=M.filter(m=>(sp[m]||0)>=10&&(sp[m]||0)<=20).length;
   const low=M.filter(m=>(sp[m]||0)<10);
-  add(inB>=7?"ok":"warn","Sätze pro Muskel",inB>=7?"fast alle Muskeln im Bereich 10–20":"zu wenig: "+low.slice(0,3).join(", ")+(low.length>3?" …":""),`${inB}/9`,"muskeln");
+  add(inB>=7?"ok":"warn","📈 Muskelaufbau",`${inB} von 9 Muskeln mit 10–20 Sätzen/Woche`+(low.length&&inB<7?" · zu wenig: "+low.slice(0,3).join(", ")+(low.length>3?" …":""):""),null,"muskeln");
   /* Schlaf */
   const n7=nights().filter(x=>x.date>=daysAgo(6)); const a=n7.length?n7.reduce((s,x)=>s+x.sleepH,0)/n7.length:null;
-  if(a==null) add("wait","Schlaf","noch keine Daten",null,"erholung");
-  else add(a>=7.5?"ok":a>=7?"wait":"warn","Schlaf",`Ø letzte ${n7.length} Nächte · Ziel ${SLEEP_GOAL} h`,fmtH(a),"erholung");
-  return rows.map(r=>({...r,col:st[r.k][0],sym:st[r.k][1]}));
+  if(a==null) add("wait","😴 Erholung","noch keine Schlafdaten",null,"erholung");
+  else add(a>=7.5?"ok":a>=7?"wait":"warn","😴 Erholung",`Schlaf Ø ${fmtH(a)} in ${n7.length} Nächten · Ziel ${SLEEP_GOAL} h`,null,"erholung");
+  const ord=["💪","📈","⚖️","😴"]; rows.sort((a,b)=>ord.findIndex(o=>a.title.startsWith(o))-ord.findIndex(o=>b.title.startsWith(o)));
+  return rows.map(r=>({...r,col:st[r.k][0],sym:st[r.k][1],extra:r.extra&&r.extra.map(l=>({...l,col:st[l.k][0],sym:st[l.k][1]}))}));
 }
 function courseCard(){
   const rows=courseRows(); if(!rows.length) return "";
-  return `<div class="sechead">Bist du auf Kurs?</div><div class="glist">${rows.map(r=>grow(`<b style="font-size:15px;color:#fff">${r.sym}</b>`,r.col,r.title,r.sub,r.val,["sub","progSub",r.tab])).join("")}</div>
-  <p class="secfoot">Woran man nach 4–8 Wochen sieht, ob Plan und App stimmen: Das geschätzte 1RM steigt, das Gewicht sinkt langsam, die Muskeln bekommen genug Sätze und du schläfst genug. ✓ auf Kurs · ! anpassen · … noch zu früh.</p>`;
+  const ic=r=>`<b style="font-size:15px;color:#fff">${r.sym}</b>`;
+  const html=rows.map(r=>{
+    if(!r.extra) return grow(ic(r),r.col,r.title,r.sub,r.val,["sub","progSub",r.tab]);
+    const op=ui.courseOpen;
+    return `<button class="grow" data-act="coursetoggle"><span class="gicon" style="background:${r.col}">${ic(r)}</span><span class="gt"><b>${r.title}</b><span>${r.sub}</span></span><span style="display:flex;color:var(--muted);${op?"transform:rotate(180deg)":""}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></span></button>`
+      + (op? r.extra.map(l=>`<div class="grow" style="padding-left:56px"><span class="gt"><b style="font-size:15px">${esc(l.n)}</b><span>${l.sub}</span></span>${l.val?`<span class="gv" style="color:${l.col}">${l.val}</span>`:`<span class="gv">${l.sym}</span>`}</div>`).join(""):"");
+  }).join("");
+  return `<div class="sechead">Bist du auf Kurs?</div><div class="glist">${html}</div>
+  <p class="secfoot">Eine Zeile pro Ziel. ✓ auf Kurs · ! anpassen · … noch zu früh. Antippen zeigt die Details.</p>`;
 }
 function progressSummary(){
   /* strength */
@@ -1723,7 +1736,7 @@ function progressSummary(){
   const wm=weekMinutes(isoWeek());
   const strains=wk.filter(d=>d<=todayStr()).map(d=>dayStrain(d).strain); const avgStrain=strains.length?strains.reduce((a,b)=>a+b,0)/strains.length:0;
   const estAny=wk.filter(d=>d<=todayStr()).some(d=>dayStrain(d).items.some(i=>i.est));
-  return `${courseCard()}<div class="sechead">Übersicht</div><div class="tiles">
+  return `<div class="tiles">
     ${tile("kraft","var(--c-kraft)",I2.dumb,"Kraft",kVal,kVal==="–"?"":"kg",kSub)}
     ${tile("muskeln","var(--c-veg)",I2.chart,"Sätze pro Muskel",inBand,"/ 9","im Zielbereich 10–20")}
     ${tile("gewicht","var(--c-prot)",I2.scale,"Gewicht",last?fmt1(last.kg.toFixed(1)):"–",last?"kg":"",last?"zuletzt "+fmtDate(last.date):"noch nichts eingetragen")}
@@ -1732,7 +1745,7 @@ function progressSummary(){
     ${tile("laufen","var(--c-lauf)",I2.run,"Laufen",fmt1(km.toFixed(1)),"km","diese Woche")}
     ${(()=>{ const t=stepsOn(todayStr()); const l7=[1,2,3,4,5,6,7].map(i=>stepsOn(daysAgo(i))).filter(v=>v!=null); const a=l7.length?l7.reduce((x,y)=>x+y,0)/l7.length:null; return tile("schritte","var(--c-veg)",'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 3c1.7 0 3 2 3 4.5S9.7 12 8 12 5 10 5 7.5 6.3 3 8 3zm-2 11h4v2.5a2 2 0 0 1-4 0zM16 7c1.7 0 3 2 3 4.5S17.7 16 16 16s-3-2-3-4.5S14.3 7 16 7zm-2 11h4v1.5a2 2 0 0 1-4 0z"/></svg>',"Schritte",t!=null?fmtInt(t):"–","",a!=null?`Ø ${fmtInt(a)} · Ziel ${fmtInt(STEP_GOAL)}`:`Ziel ${fmtInt(STEP_GOAL)}`); })()}
     ${(()=>{ const a=kcalAvg7(); return tile("kalorien",KCAL_COL,I_FLAME,"Kalorien",a?fmtInt(a.t):"–",a?"kcal":"",a?`Ø 7 Tage · ${fmtInt(a.a)} aktiv`:"noch keine Daten"); })()}
-  </div>`;
+  </div>${courseCard()}`;
 }
 function strainWeekCard(){
   const days=[]; for(let i=13;i>=0;i--) days.push(daysAgo(i));
@@ -1909,6 +1922,7 @@ function bind(){
       if(ok){ const mins=d.startedAt?Math.round((Date.now()-d.startedAt)/60000):null; setDraft(null); render(); rpeSheet(d.id, mins&&mins>=10&&mins<=240?mins:60); } else b.disabled=false;
     }
     if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
+    if(a==="coursetoggle"){ ui.courseOpen=!ui.courseOpen; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
     if(a==="toggleplan"){ ui.openPlan = ui.openPlan===b.dataset.id ? null : b.dataset.id; render(); return; }
     if(a==="editplan"){ ui.editPlan=b.dataset.id; planDraft=JSON.parse(JSON.stringify(S.plans.find(x=>x.id===ui.editPlan))); renderPlanDraft(); }
     if(a==="closeplan"){ ui.editPlan=null; planDraft=null; render(); }
