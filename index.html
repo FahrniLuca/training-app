@@ -309,6 +309,14 @@ html{min-height:calc(100% + env(safe-area-inset-top,0px));background:var(--bg)}
 body{min-height:calc(100% + env(safe-area-inset-top,0px))}
 /* Schwebende Tab-Leiste ganz unten, knapp über dem Home-Balken */
 .tabs{bottom:max(8px, calc(env(safe-area-inset-bottom,0px) - 18px))}
+.planhead{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 16px;background:transparent;border-radius:0;min-height:64px}
+.sets.chk{grid-template-columns:20px minmax(0,1fr) minmax(0,1fr) 46px 40px 26px}
+.setok{min-height:40px;padding:0;border-radius:10px;font-size:18px;font-weight:700;background:var(--surface2);color:var(--muted)}
+.setok.on{background:var(--good);color:#fff}
+input.num.done{color:var(--good)}
+.savebar{position:fixed;z-index:19;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));margin:0 auto;max-width:540px;bottom:calc(max(8px, calc(env(safe-area-inset-bottom,0px) - 18px)) + 72px);min-height:48px;border-radius:24px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.draftpad{height:64px}
+.runbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:color-mix(in srgb,var(--acc) 18%,var(--surface));border-radius:var(--r);padding:12px 16px}
 #scroller{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 </style>
@@ -872,17 +880,15 @@ function vTrainStart(){
 function vDraft(d){
   const cardio = d.kind==="cardio";
   return `<section class="card">
-    <div class="row between"><div><div class="eyebrow">${fmtDate(d.date)}</div><h2>${esc(d.planName||"Freies Training")}</h2></div>
-    <button data-act="cancel">Abbrechen</button></div>
+    <div><div class="eyebrow">${fmtDate(d.date)}</div><h2>${esc(d.planName||"Freies Training")}</h2></div>
     <label class="f">Datum<input type="date" id="d_date" value="${esc(d.date)}"></label>
-    <p class="small muted">Dauer und Puls kommen über Garmin.</p>
     ${cardio?`<label class="f">Was hast du gemacht?<textarea id="d_note" rows="3" placeholder="z. B. 5 km locker, Hyrox-Workout mit Wall Balls und Rudern">${esc(d.note||"")}</textarea></label><p class="small muted">Puls, Pace und Distanz kommen über Garmin dazu.</p>`:""}
   </section>
   ${cardio?"":d.entries.map((e,i)=>exCard(e,i)).join("")}
   ${cardio?"":`<section class="card"><div class="row"><select id="d_addsel" aria-label="Übung hinzufügen"><option value="">Übung hinzufügen …</option>${MUSCLES.map(m=>`<optgroup label="${m}">${LIB.filter(l=>l[1]===m).map(l=>`<option>${esc(l[0])}</option>`).join("")}</optgroup>`).join("")}</select><button data-act="addex">Hinzufügen</button></div>
   <label class="f">Notiz<textarea id="d_note" rows="2" placeholder="Wie lief's? Schmerzen, Schlaf, Energie …">${esc(d.note||"")}</textarea></label></section>`}
-  <button class="primary" data-act="finish" style="min-height:52px">Training speichern</button>
-  <button class="ghost" data-act="cancel">Abbrechen ohne Speichern</button>`;
+  <button class="ghost" data-act="cancel">Abbrechen ohne Speichern</button>
+  <div class="draftpad"></div><button class="primary savebar" data-act="finish">Training speichern</button>`;
 }
 function exCard(e,i){
   const last = lastSetsFor(e.name);
@@ -898,22 +904,27 @@ function exCard(e,i){
     ${pg?`<div class="prog ${pg.kind}"><b>${pg.kind==="up"?"Heute steigern":pg.kind==="reps"?"Heute":"Startgewicht"}</b><span class="small">${esc(pg.text)}</span></div>`:""}
     ${dist?`<div class="sets"><span class="h">#</span><span class="h">Meter</span><span class="h">Zeit</span><span class="h">kg</span><span></span>
     ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(e.reps||(last&&last.sets[j]?last.sets[j].m:"")||"")}" aria-label="Meter Runde ${j+1}"><input class="num" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="m:ss" aria-label="Zeit Runde ${j+1}"><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(last&&last.sets[j]&&last.sets[j].w?last.sets[j].w:"–")}" aria-label="Gewicht Runde ${j+1}"><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Runde löschen">−</button>`).join("")}
-    </div>`:`<div class="sets"><span class="h">#</span><span class="h">kg</span><span class="h">Wdh</span><span class="h">RIR</span><span></span>
-    ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(phW(j))}" aria-label="Gewicht Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(phR(j))}" aria-label="Wiederholungen Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="–" aria-label="Wiederholungen in Reserve Satz ${j+1}"><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Satz löschen">−</button>`).join("")}
+    </div>`:`<div class="sets chk"><span class="h">#</span><span class="h">kg</span><span class="h">Wdh</span><span class="h">RIR</span><span></span><span></span>
+    ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(phW(j))}" aria-label="Gewicht Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(phR(j))}" aria-label="Wiederholungen Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="–" aria-label="Wiederholungen in Reserve Satz ${j+1}"><button class="setok${s.done?" on":""}" data-act="setok" data-i="${i}" data-j="${j}" aria-label="Satz ${j+1} erledigt">✓</button><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Satz löschen">−</button>`).join("")}
     </div>`}
-    <div class="row"><button class="tiny" data-act="addset" data-i="${i}">+ ${dist?"Runde":"Satz"}</button><span class="small muted">${dist?"Zeit z. B. 2:05. Gewicht nur falls verwendet.":isHyroxEx(e)?"kg z. B. Ballgewicht.":"Graue Zahlen = Vorschlag. RIR = Wdh, die du noch geschafft hättest."}</span></div>
+    <div class="row"><button class="tiny" data-act="addset" data-i="${i}">+ ${dist?"Runde":"Satz"}</button><span class="small muted">${dist?"Zeit z. B. 2:05. Gewicht nur falls verwendet.":isHyroxEx(e)?"kg z. B. Ballgewicht.":"Graue Zahlen = Vorschlag, ✓ übernimmt sie. RIR = Wdh, die du noch geschafft hättest."}</span></div>
   </section>`;
 }
 
 function vPlaene(){
   if(ui.editPlan){ const p=S.plans.find(x=>x.id===ui.editPlan); if(p) return vPlanEdit(p); }
-  return `${S.plans.map(p=>`<section class="card">
-    <div class="row between"><h2>${esc(p.name)}</h2><button class="tiny" data-act="editplan" data-id="${esc(p.id)}">Bearbeiten</button></div>
+  const chev='<svg class="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>';
+  return `${S.plans.map(p=>{ const op=ui.openPlan===p.id; const n=(p.exercises||[]).length;
+    const sub=p.kind==="cardio"?"Ausdauer":p.kind==="hyrox"?n+" Stationen":n+" Übungen";
+    return `<section class="card" style="padding:0;overflow:hidden">
+    <button class="planhead" data-act="toggleplan" data-id="${esc(p.id)}" aria-expanded="${op}"><span style="min-width:0;text-align:left"><b style="font-size:19px;display:block;color:var(--fg)">${esc(p.name)}</b><span class="small muted" style="font-weight:400">${sub}</span></span><span style="${op?"transform:rotate(180deg);":""}display:flex">${chev}</span></button>
+    ${op?`<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:10px">
     ${p.kind==="cardio"?`<p class="muted">${esc(p.note||"Ausdauereinheit")}</p>`:
       (p.exercises||[]).length?`<div class="list">${p.exercises.map(e=>`<div class="li"><div class="t"><b>${esc(e.name)}</b><span class="small muted">${esc(e.muscle||"")}${secOf(e).length?` + ${esc(secOf(e).join(", "))}`:""}${e.sets?` · ${e.sets} ${metricOf(e)==="dist"?"Runden":"Sätze"}`:""}${e.reps?` · ${esc(e.reps)} ${metricOf(e)==="dist"?"m":"Wdh"}`:""}${e.weight?` · <span class="mono">${esc(e.weight)} kg</span>`:""}${e.note?` · ${esc(e.note)}`:""}</span></div></div>`).join("")}</div>`
       :`<p class="muted">Noch keine Übungen. Tippe auf „Bearbeiten“, um sie einzutragen.</p>`}
     ${overlapHint(p)}
-  </section>`).join("")}
+    <button data-act="editplan" data-id="${esc(p.id)}">Plan bearbeiten</button></div>`:""}
+  </section>`; }).join("")}
   <section class="card"><h3>Neuer Plan</h3><div class="row"><input id="np_name" placeholder="z. B. Oberkörper A"><select id="np_kind" aria-label="Art"><option value="kraft">Kraft</option><option value="hyrox">Hyrox / Zirkel</option><option value="cardio">Ausdauer</option></select><button data-act="newplan">Anlegen</button></div></section>`;
 }
 function overlapHint(p){
@@ -1647,8 +1658,15 @@ function bwTrend(){
   const den=xs.reduce((a,x)=>a+(x-mx)**2,0); const slope=den?xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0)/den*7:0;
   return {roll, n:r.length, slope};
 }
+function runRow(){
+  const d=getDraft(); if(!d) return "";
+  const mins=d.startedAt?Math.max(0,Math.round((Date.now()-d.startedAt)/60000)):null;
+  const done=(d.entries||[]).reduce((n,e)=>n+e.sets.filter(x=>x.done||x.r!=="").length,0), all=(d.entries||[]).reduce((n,e)=>n+e.sets.length,0);
+  return `<div class="sechead">Training läuft</div><div class="runbar"><div style="min-width:0"><b style="font-size:19px">${esc(d.planName||"Training")}</b><div class="small muted">${mins!=null?"seit "+mins+" min · ":""}${done} von ${all} Sätzen</div></div>
+  <button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="goto" data-tab="training">Weiter</button></div>`;
+}
 function vToday(){
-  return `${ringsCard()}${weekBanner()}${weighRow()}${nextRow()}${todayActivities()}${stepsRow()}${kcalRow()}${weekStripCompact()}${eveningList()}`;
+  return `${ringsCard()}${runRow()}${weekBanner()}${weighRow()}${getDraft()?"":nextRow()}${todayActivities()}${stepsRow()}${kcalRow()}${weekStripCompact()}${eveningList()}`;
 }
 
 /* ===== Fortschritt: Health-style summary + detail ===== */
@@ -1833,6 +1851,15 @@ function splitFor(n){
 }
 
 /* ---------- interactions ---------- */
+function fillFromPlaceholder(d){
+  /* leere kg/Wdh mit dem grauen Vorschlag füllen, sobald ein Satz begonnen oder abgehakt ist */
+  (d.entries||[]).forEach((e,i)=>{ if(metricOf(e)==="dist") return; e.sets.forEach((x,j)=>{
+    if(!(x.done || x.r!=="" )) return;
+    const w=$(`#s_${i}_${j}_w`), r=$(`#s_${i}_${j}_r`);
+    if(x.w==="" && w && num(w.placeholder)!=null) x.w=w.placeholder;
+    if(x.r==="" && r && num(r.placeholder)!=null) x.r=r.placeholder; }); });
+  return d;
+}
 function readDraft(){
   const d=getDraft(); if(!d) return null;
   const dd=$("#d_date"); if(dd) d.date=dd.value||d.date;
@@ -1868,12 +1895,13 @@ function bind(){
     }
     if(a==="cancel"){ const dd=readDraft(); const touched = dd && ((dd.note||"").trim() || (dd.entries||[]).some(e=>e.sets.some(x=>x.w!==""||x.r!==""||(x.rir??"")!==""))); if(!touched) b.dataset.confirm="1";
       if(b.dataset.confirm){ setDraft(null); setDraft(null); render(); } else { b.dataset.confirm="1"; b.textContent="Eingaben gehen verloren – nochmals tippen"; } }
+    if(a==="setok"){ const d=readDraft(); const x=d.entries[+b.dataset.i].sets[+b.dataset.j]; x.done=!x.done; if(x.done) fillFromPlaceholder(d); setDraft(d); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
     if(a==="addset"){ const d=readDraft(); const e=d.entries[+b.dataset.i]; const l=e.sets.at(-1)||{}; e.sets.push({w:l.w||"",r:"",rir:""}); setDraft(d); render(); }
     if(a==="rmset"){ const d=readDraft(); d.entries[+b.dataset.i].sets.splice(+b.dataset.j,1); setDraft(d); render(); }
     if(a==="rmex"){ const d=readDraft(); d.entries.splice(+b.dataset.i,1); setDraft(d); render(); }
     if(a==="addex"){ const s=$("#d_addsel"); if(!s.value) return; const d=readDraft(); const L=LIBMAP[s.value]; d.entries.push({name:L.name,muscle:L.muscle,metric:metricOf(L),reps:metricOf(L)==="dist"?"":defaultReps(L),secondary:secOf(L),compound:isCompound(L),sets:[{w:"",r:"",rir:""},{w:"",r:"",rir:""},{w:"",r:"",rir:""}]}); setDraft(d); render(); }
     if(a==="finish"){
-      const d=readDraft();
+      const d=fillFromPlaceholder(readDraft());
       const entries=(d.entries||[]).map(e=>{ const dist=metricOf(e)==="dist"; return {name:e.name,muscle:e.muscle,metric:metricOf(e),secondary:secOf(e),reps:e.reps||"",sets: dist ? e.sets.filter(s=>s.r!==""||(s.rir??"")!=="").map(s=>({m:num(s.r),t:(s.rir||"").trim()||null,w:num(s.w)})) : e.sets.filter(s=>s.w!==""||s.r!=="").map(s=>({w:num(s.w),r:num(s.r),rir:s.rir===""?null:num(s.rir)}))}; }).filter(e=>e.sets.length);
       if(d.kind!=="cardio" && !entries.length){ toast("Trage mindestens einen Satz oder eine Runde ein"); return; }
       b.disabled=true;
@@ -1881,6 +1909,7 @@ function bind(){
       if(ok){ const mins=d.startedAt?Math.round((Date.now()-d.startedAt)/60000):null; setDraft(null); render(); rpeSheet(d.id, mins&&mins>=10&&mins<=240?mins:60); } else b.disabled=false;
     }
     if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
+    if(a==="toggleplan"){ ui.openPlan = ui.openPlan===b.dataset.id ? null : b.dataset.id; render(); return; }
     if(a==="editplan"){ ui.editPlan=b.dataset.id; planDraft=JSON.parse(JSON.stringify(S.plans.find(x=>x.id===ui.editPlan))); renderPlanDraft(); }
     if(a==="closeplan"){ ui.editPlan=null; planDraft=null; render(); }
     if(a==="addplanex"){ planDraft=readPlanEdit(planDraft); planDraft.exercises.push(planDraft.kind==="hyrox"?{name:"",muscle:"Ganzkörper",sets:1,reps:""}:{name:"",muscle:"Unbekannt",sets:3,reps:"8-12"}); renderPlanDraft(); }
