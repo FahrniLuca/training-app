@@ -446,7 +446,7 @@ function progression(e){
 
 /* Evidence base, researched and cross-checked Nov 2026 */
 const EVIDENCE = [
- {t:"Kalorien von der Uhr", c:"hoch", r:"Uhren schätzen den Kalorienverbrauch ungenau: Über alle Marken lag der mittlere Fehler bei über 30 %, bei Garmin-Modellen je nach Studie etwa −20 % bis +50 %. Der Ruheumsatz aus Profilangaben ist deutlich genauer. Deshalb zeigt die App Kalorien nur zur Orientierung und rechnet nicht damit.", s:[{n:"Germini et al. 2022, J Med Internet Res 24(1):e30791", u:"https://www.jmir.org/2022/1/e30791"}]},
+ {t:"Kalorien der Uhr sind ungenau", c:"hoch", r:"Uhren schätzen den Kalorienverbrauch ungenau: Über alle Marken lag der mittlere Fehler bei über 30 %, bei Garmin-Modellen je nach Studie etwa −20 % bis +50 %. Der Ruheumsatz aus Profilangaben ist deutlich genauer. Deshalb zeigt die App Kalorien nur zur Orientierung und rechnet nicht damit.", s:[{n:"Germini et al. 2022, J Med Internet Res 24(1):e30791", u:"https://www.jmir.org/2022/1/e30791"}]},
  {t:"Sätze pro Muskel und Woche", c:"hoch", r:"Mehr Sätze bringen mehr Wachstum, aber jeder weitere Satz bringt weniger. Sinnvoller Bereich: 10–20 Sätze pro Muskel und Woche. Indirekte Sätze zählen halb (Bankdrücken = 1 Satz Brust, 0,5 Satz Trizeps). Für Kraft reichen schon 4–8 Sätze pro Bewegung. Pro Einheit lohnen sich bis etwa 6–10 direkte Sätze für einen Muskel, darüber flacht es ab.", s:[{n:"Pelland et al. 2026, Sports Medicine 56(2):481–505", u:"https://sponet.de/sponet/Record/4097139"},{n:"Preprint mit allen Zahlen (SportRxiv)", u:"https://sportrxiv.org/index.php/server/preprint/view/460"}]},
  {t:"Jeden Muskel 2× pro Woche", c:"hoch", r:"Bei gleichem Wochenvolumen ist die Frequenz fürs Wachstum fast egal. 2× pro Woche verteilt die Sätze aber besser und hilft der Kraft leicht. Deshalb trifft jede empfohlene Aufteilung jeden Muskel etwa 2×.", s:[{n:"Schoenfeld, Ogborn & Krieger 2016, Sports Medicine 46:1689–1697", u:"https://link.springer.com/10.1007/s40279-016-0543-8"},{n:"Grgic, Schoenfeld & Latella 2019, J Sci Med Sport 22(3)", u:"https://ro.ecu.edu.au/ecuworkspost2013/5665"}]},
  {t:"Wiederholungen und Nähe zum Versagen", c:"hoch", r:"Muskeln wachsen mit leichten wie schweren Gewichten gleich gut, solange du nah ans Versagen gehst. Für Kraft sind schwerere Gewichte besser. Praxis: Grundübungen 4–8 Wdh mit 1–3 Wdh in Reserve (RIR), Isolationsübungen 8–15 Wdh mit 0–2 RIR. Echtes Muskelversagen bringt kaum mehr.", s:[{n:"Lopez et al. 2021, Med Sci Sports Exerc 53(6):1206–1216", u:"https://ro.ecu.edu.au/ecuworkspost2013/10364"},{n:"Refalo et al. 2024, Sports Medicine (Meta-Analyse Nähe zum Versagen)", u:"https://dro.deakin.edu.au/articles/journal_contribution/Influence_of_Resistance_Training_Proximity-to-Failure_on_Skeletal_Muscle_Hypertrophy_A_Systematic_Review_with_Meta-analysis/22030796"}]},
@@ -853,18 +853,18 @@ function vTrainStart(){
   const wk = isoWeek();
   const wkLogs = S.logs.filter(l=>isoWeek(l.date)===wk);
   const plan = S.weeks[wk];
+  const sug = suggestedPlanId();
   const sick = todayStr() < "2026-11-22" ? `<details class="card" style="padding-top:12px"><summary>Wiedereinstieg nach der Krankheit</summary><div><p class="small">Woche 1: etwa die Hälfte der Sätze, 3–4 Wiederholungen in Reserve, noch kein Hyrox. Woche 2: etwa 80 %. Danach normal.</p><p class="small">Sofort aufhören und ärztlich abklären bei Brustschmerz, starker Atemnot, Schwindel oder ungewöhnlich hohem Puls.</p></div></details>` : "";
-  return `${weekBanner()}
-  <section class="card">
+  return `<section class="card">
     <div class="row between"><h2>Training starten</h2><span class="pill acc">Woche ${wk.slice(-2)} · ${wkLogs.length}${plan&&plan.days?" / "+plan.days:""} Einheiten</span></div>
-    ${S.plans.length? `<div class="grid2">${S.plans.map(p=>`<button data-act="start" data-id="${esc(p.id)}" style="text-align:left;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:600;color:var(--fg)">${esc(p.name)}</span><span class="small muted" style="font-weight:400">${p.kind==="cardio"?"Ausdauer":p.kind==="hyrox"?"Hyrox · "+(p.exercises||[]).length+" Stationen":(p.exercises||[]).length+" Übungen"}</span></button>`).join("")}</div>`
+    ${S.plans.length? `<div class="grid2">${S.plans.map(p=>{ const nx=p.id===sug; return `<button data-act="start" data-id="${esc(p.id)}" style="text-align:left;display:flex;flex-direction:column;gap:2px${nx?";background:rgba(10,132,255,.16)":""}">${nx?`<span class="small" style="color:var(--acc);font-weight:600">Als Nächstes</span>`:""}<span style="font-size:17px;font-weight:600;color:var(--fg)">${esc(p.name)}</span><span class="small muted" style="font-weight:400">${p.kind==="cardio"?"Ausdauer":p.kind==="hyrox"?"Hyrox · "+(p.exercises||[]).length+" Stationen":(p.exercises||[]).length+" Übungen"}</span></button>`; }).join("")}</div>`
       : `<p class="muted">${S.ready?"Noch keine Pläne. Lege unter „Pläne“ den ersten an.":"Pläne werden geladen …"}</p>`}
     <button class="ghost" data-act="start" data-id="">Freies Training ohne Plan</button>
   </section>
   ${dayCard()}
   <section class="card">
     <h2>Gespeicherte Trainings</h2>
-    ${recent.length? `<div class="list">${recent.map(l=>`<div class="li"><div class="t"><b>${esc(l.planName||"Training")}</b><span class="small muted">${fmtDate(l.date)} · ${(l.entries||[]).length} Übungen · ${(l.entries||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} Sätze${l.durationMin?" · "+l.durationMin+" min":""}</span></div><button class="tiny ghost" data-act="dellog" data-id="${esc(l.id)}" aria-label="Einheit löschen">Löschen</button></div>`).join("")}</div>`
+    ${recent.length? `<div class="list">${recent.map(l=>`<div class="li"><div class="t"><b>${esc(l.planName||"Training")}</b><span class="small muted">${fmtDate(l.date)} · ${(l.entries||[]).length} Übungen · ${(l.entries||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} Sätze${l.durationMin?" · "+l.durationMin+" min":""}</span></div><button class="tiny ghost" style="color:var(--muted);font-weight:400" data-act="dellog" data-id="${esc(l.id)}" aria-label="Einheit löschen">Löschen</button></div>`).join("")}</div>`
       : `<p class="muted">Hier erscheinen deine Einheiten, sobald du das erste Training speicherst.</p>`}
   </section>${sick}`;
 }
@@ -907,8 +907,7 @@ function exCard(e,i){
 
 function vPlaene(){
   if(ui.editPlan){ const p=S.plans.find(x=>x.id===ui.editPlan); if(p) return vPlanEdit(p); }
-  return `${weekBanner()}
-  ${S.plans.map(p=>`<section class="card">
+  return `${S.plans.map(p=>`<section class="card">
     <div class="row between"><h2>${esc(p.name)}</h2><button class="tiny" data-act="editplan" data-id="${esc(p.id)}">Bearbeiten</button></div>
     ${p.kind==="cardio"?`<p class="muted">${esc(p.note||"Ausdauereinheit")}</p>`:
       (p.exercises||[]).length?`<div class="list">${p.exercises.map(e=>`<div class="li"><div class="t"><b>${esc(e.name)}</b><span class="small muted">${esc(e.muscle||"")}${secOf(e).length?` + ${esc(secOf(e).join(", "))}`:""}${e.sets?` · ${e.sets} ${metricOf(e)==="dist"?"Runden":"Sätze"}`:""}${e.reps?` · ${esc(e.reps)} ${metricOf(e)==="dist"?"m":"Wdh"}`:""}${e.weight?` · <span class="mono">${esc(e.weight)} kg</span>`:""}${e.note?` · ${esc(e.note)}`:""}</span></div></div>`).join("")}</div>`
@@ -1216,8 +1215,19 @@ function vLaufen(){
 
 const stat=(l,v,u)=>`<div class="stat"><span>${l}</span><b>${esc(v)}</b><span>${esc(u)}</span></div>`;
 
+function mealPlanDated(pl, start){
+  /* Einträge wie "Fr Mittag: …" ab dem Startdatum fortlaufend Tagen zuordnen */
+  const WD={So:0,Mo:1,Di:2,Mi:3,Do:4,Fr:5,Sa:6}; let cur=start;
+  return pl.map(x=>{ const m=String(x).match(/^(Mo|Di|Mi|Do|Fr|Sa|So)\b([^:]*)/); if(!m||!cur) return {x,date:null,end:null};
+    let d=cur; for(let i=0;i<7 && new Date(d+"T12:00:00").getDay()!==WD[m[1]];i++) d=addDays(d,1); cur=d;
+    const sl=m[2]; const end=/abend/i.test(sl)?"21:30":/nachmittag/i.test(sl)?"17:30":/mittag|brunch/i.test(sl)?"14:00":/morgen|früh/i.test(sl)?"10:00":"23:59";
+    return {x,date:d,end}; });
+}
 function mealPlanCard(){
-  const sh=S.shop; const pl=(sh&&sh.plan)||[]; if(!pl.length) return "";
+  const sh=S.shop; const all=(sh&&sh.plan)||[]; if(!all.length) return "";
+  const now=new Date(); const today=todayStr(); const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  const pl=mealPlanDated(all, sh.generatedAt||null).filter(e=>!e.date || e.date>today || (e.date===today && e.end>hm)).map(e=>e.x);
+  if(!pl.length) return `<div class="sechead">Essensplan</div><div class="glist">${grow(null,null,"Plan aufgebraucht","Der neue Plan kommt mit der nächsten Einkaufsliste",null)}</div>`;
   return `<div class="sechead">Essensplan bis zum nächsten Einkauf</div><div class="glist">${pl.map(x=>{ const m=String(x).match(/^([^:]+):\s*(.*)$/); return `<div class="grow"><span class="gt"><b>${esc(m?m[1]:x)}</b>${m?`<span>${esc(m[2])}</span>`:""}</span></div>`; }).join("")}</div>`;
 }
 function foodsCard(){
@@ -1266,8 +1276,7 @@ function vCoach(){
   const wk=isoWeek(); const w=S.weeks[wk]||{};
   const wd=["Mo","Di","Mi","Do","Fr","Sa","So"];
   const c=S.coach;
-  return `${weekBanner()}
-  <section class="card">
+  return `<section class="card">
     <div class="row between"><h2>Diese Woche</h2><span class="pill">${wk}</span></div>
     <p class="small muted">Wie viele Tage hast du diese Woche fürs Training? Daran richtet sich der Wochenplan.</p>
     <div class="eyebrow">Trainingstage</div>
@@ -1289,7 +1298,7 @@ function vCoach(){
   <section class="card">
     <h2>Grundlagen</h2>
     <p class="small muted">Worauf sich die Empfehlungen stützen. Jeder Punkt mit Studienlage und Sicherheit.</p>
-    ${EVIDENCE.length?EVIDENCE.map(e=>`<details><summary>${esc(e.t)} <span class="pill ${e.c==="hoch"?"good":e.c==="mittel"?"warn":""}">Evidenz ${esc(e.c)}</span></summary><div><p>${esc(e.r)}</p>${e.s.map(s=>`<p class="src">${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.n)}</a>`:esc(s.n)}</p>`).join("")}</div></details>`).join(""):`<p class="muted">Wird geladen.</p>`}
+    ${EVIDENCE.length?EVIDENCE.filter(e=>!(e.t.startsWith("Wiedereinstieg") && todayStr()>="2026-11-22")).map(e=>`<details><summary>${esc(e.t)} <span class="pill ${e.c==="hoch"?"good":e.c==="mittel"?"warn":""}">Evidenz ${esc(e.c)}</span></summary><div><p>${esc(e.r)}</p>${e.s.map(s=>`<p class="src">${s.u?`<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.n)}</a>`:esc(s.n)}</p>`).join("")}</div></details>`).join(""):`<p class="muted">Wird geladen.</p>`}
   </section>`;
 }
 /* ---------- tab containers ---------- */
@@ -1337,7 +1346,7 @@ function recovery(){
     {c:"warn", t:"Weniger Volumen", d:"Mach pro Übung einen Satz weniger und bleib bei 2–3 Wiederholungen in Reserve. Hyrox oder harte Läufe besser auf einen erholten Tag verschieben."},
     {c:"bad", t:"Leichter Tag", d:"Lockeres Training, Technik, Spazieren oder Pause. Heute Abend früh ins Bett."}
   ][level];
-  return {g,score,level,parts,shortN,baseN:Math.min(hv.length,rv.length),needB:MINB,...T};
+  return {g,score,level,parts,shortN,baseN:Math.min(hv.length,rv.length),needB:MINB,hrvN:H?H.n:0,...T};
 }
 function ring(score,color){
   const r=54, c=2*Math.PI*r, off=c*(1-score/100);
@@ -1353,7 +1362,7 @@ function recoveryCard(){
     <div class="parts">${r.parts.map(p=>`<div class="part"><span class="small muted">${p.k}</span><div class="bar"><i style="width:${Math.round(p.v)}%;background:${p.v>=67?"var(--good)":p.v>=34?"var(--warn)":"var(--bad)"}"></i></div><span class="small mono">${esc(p.txt)}</span></div>`).join("")}</div>
     ${r.parts.length<3?`<p class="small muted">Noch nur aus dem Schlaf berechnet. HRV und Ruhepuls fliessen ein, sobald ${r.needB} Nächte als Basis da sind (jetzt ${r.baseN}).</p>`:""}
     ${r.shortN>=2?`<p class="small muted">${r.shortN} der letzten 3 Nächte unter 6 Stunden, deshalb höchstens Rot.</p>`:""}
-    <details class="mini"><summary class="small muted">Wie wird das berechnet?</summary><div><p class="small muted">Vereinfachte, offene Formel: Schlafdauer (40 %), HRV (35 %) und Ruhepuls (25 %) im Vergleich zu deinem eigenen 30-Tage-Median. Keine medizinische Aussage. Grundlage für die Schlafwirkung: Craven et al. 2022, Lamon et al. 2021.</p></div></details>
+    <details class="mini"><summary class="small muted">Wie wird das berechnet?</summary><div><p class="small muted">Vereinfachte, offene Formel: Schlafdauer (40 %), HRV als 7-Tage-Schnitt im Vergleich zu deinem 30-Tage-Normalbereich (35 %) und Ruhepuls im Vergleich zu deinem 30-Tage-Median (25 %). Keine medizinische Aussage. Grundlage für die Schlafwirkung: Craven et al. 2022, Lamon et al. 2021.</p></div></details>
   </section>`;
 }
 
@@ -1472,7 +1481,7 @@ function dayStrain(d){
   /* Session-RPE (Foster 2001): Härte 1–10 × Minuten. Umrechnung ÷6 auf die TRIMP-Skala (60 min bei RPE 7 ≈ 70). */
   rpeLogs.forEach(l=>items.push({name:(l.planName||"Training")+` (Härte ${l.rpe})`, min:l.durationMin, t:l.rpe*l.durationMin/6, kind:"kraft"}));
   const sets=S.logs.filter(l=>l.date===d && !(l.rpe>0 && l.durationMin>0)).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+workSets(e).length,0),0);
-  if(sets) items.push({name:"Harte Sätze (Schätzung, Härte fehlt)", sets, t:sets*1.2, kind:"kraft"});
+  if(sets) items.push({name:"Harte Sätze (Schätzung, Härte fehlt)", sets, t:sets*1.2, kind:"kraft", est:true});
   /* Alltag: Schritte ausserhalb der Trainings, als lockeres Gehen (~100 Schritte/min bei ~33 % Herzfrequenzreserve) */
   if(g && g.steps>0){
     const actSteps=(g.activities||[]).reduce((a,x)=>a+(x.steps!=null?+x.steps:(/run|walk|treadmill|hik/i.test(x.type||"")&&x.km?x.km*1300:0)),0);
@@ -1516,8 +1525,8 @@ function ringsCard(){
   return `<section class="card">
     <div class="rings-wrap">${rings3(ds.strain, r?r.score:0, sleepPct, recCol)}
       <div class="rlegend">
-        <div class="rl"><span class="k" style="color:var(--c-strain)">Belastung</span><span class="v">${fmt1(ds.strain)}<small>/ 21</small></span><span class="s">Ziel ${tgt[0]}–${tgt[1]}${inT?" · erreicht ✓":ds.strain>tgt[1]?" · überschritten":""}</span></div>
-        <div class="rl"><span class="k" style="color:${recCol}">Erholung</span><span class="v">${r?r.score:"–"}<small>%</small></span></div>
+        <div class="rl"><span class="k" style="color:var(--c-strain)">Belastung</span><span class="v">${fmt1(ds.strain)}<small>/ 21</small></span><span class="s">Ziel ${tgt[0]}–${tgt[1]}${inT?" · erreicht ✓":ds.strain>tgt[1]?" · überschritten":""}${ds.items.some(i=>i.est)?" · geschätzt, Härte fehlt":""}</span></div>
+        <div class="rl"><span class="k" style="color:${recCol}">Erholung</span><span class="v">${r?r.score:"–"}<small>%</small></span>${r&&r.hrvN<21?`<span class="s">noch unsicher · Basis ${r.hrvN} von 30 Tagen</span>`:""}</div>
         <div class="rl"><span class="k" style="color:var(--c-sleep)">Schlaf</span><span class="v">${ln?fmtH(ln.sleepH).replace(" h ",":").replace(/^(\d+):/,"$1:"):"–"}<small>${ln?sleepPct+" %":""}</small></span></div>
       </div></div>
     ${r?`<div class="verdict"><span class="dot" style="background:${recCol}"></span><div><b>${r.t}</b><p class="small muted">${r.d}</p></div></div>`:""}
@@ -1525,7 +1534,7 @@ function ringsCard(){
       ${r?`<div class="parts">${r.parts.map(p=>`<div class="part"><span class="small muted">${p.k}</span><div class="bar"><i style="width:${Math.round(p.v)}%;background:${p.v>=67?"var(--good)":p.v>=34?"var(--warn)":"var(--bad)"}"></i></div><span class="small">${esc(p.txt)}</span></div>`).join("")}</div>`:""}
       ${r&&r.parts.length<3?`<p class="small muted">HRV und Ruhepuls zählen ab ${r.needB} Nächten Basis (jetzt ${r.baseN}).</p>`:""}
       <p class="small muted"><b>Belastung</b> (0–21): Dauer × Puls im Verhältnis zu Ruhepuls (${rhrRef()}) und geschätztem Maximalpuls (${HRMAX}), hohe Pulse zählen überproportional (Banister-TRIMP). Krafttraining zählt über deine Härte-Angabe nach dem Training × Minuten (Session-RPE, Foster 2001), weil der Puls Krafttraining unterschätzt; fehlt sie, schätzt die App über die Arbeitssätze. Maximalpuls: höchster gemessener Wert der letzten 90 Tage oder Formel (${HRMAX_FORMULA}). Auch Bewegung im Alltag zählt: Schritte ausserhalb der Trainings werden als lockeres Gehen gerechnet (etwa 5000 Schritte ≈ 4, 10 000 ≈ 8). Nicht linear: von 10 auf 20 ist viel schwerer als von 0 auf 10. Das Ziel richtet sich nach deiner Erholung.</p>
-      <p class="small muted"><b>Erholung</b>: Schlaf 40 %, HRV 35 %, Ruhepuls 25 %, verglichen mit deinem 30-Tage-Median. <b>Schlaf</b>: Prozent von ${SLEEP_GOAL} Stunden. Vereinfachte, offene Formeln, keine medizinische Aussage.</p>
+      <p class="small muted"><b>Erholung</b>: Schlaf 40 %, HRV 35 %, Ruhepuls 25 %. HRV: 7-Tage-Schnitt im Vergleich zu deinem Normalbereich der letzten 30 Tage (Plews), Ruhepuls im Vergleich zu deinem 30-Tage-Median. Mit weniger als 3 Wochen Daten ist der Normalbereich noch unsicher. <b>Schlaf</b>: Prozent von ${SLEEP_GOAL} Stunden. Vereinfachte, offene Formeln, keine medizinische Aussage.</p>
     </div></details>
   </section>`;
 }
@@ -1535,6 +1544,18 @@ function todayActivities(){
   const col={kraft:"var(--c-kraft)",lauf:"var(--c-lauf)",hyrox:"var(--c-hyrox)",other:"#8E8E93"};
   const ic={kraft:I2.dumb,lauf:I2.run,hyrox:I2.flame,other:I2.bolt};
   return `<div class="sechead">Heute erledigt</div><div class="glist">${ds.items.map(i=>grow(ic[i.kind],col[i.kind],esc(i.name),[i.start,i.min?Math.round(i.min)+" min":"",i.sets?i.sets+" Sätze":""].filter(Boolean).join(" · "),fmt1(i.s))).join("")}</div>`;
+}
+function suggestedPlanId(){
+  const pv=prof().vacation; if(pv&&pv.on) return null;
+  const ps=prof().planned; const today=todayStr();
+  if(ps && ps.planId && ps.date>=today && !S.logs.some(l=>l.date===ps.date && l.planId===ps.planId) && S.plans.some(x=>x.id===ps.planId)) return ps.planId;
+  const kraft=S.plans.filter(p=>(p.kind||"kraft")==="kraft" && (p.exercises||[]).length).sort((a,b)=>(a.order??99)-(b.order??99));
+  if(!kraft.length) return null;
+  const lastLog=S.logs.find(l=>l.planId && kraft.some(p=>p.id===l.planId));
+  if(!lastLog) return kraft[0].id;
+  const i=kraft.findIndex(p=>p.id===lastLog.planId); const rot=[...kraft.slice(i+1),...kraft.slice(0,i+1)];
+  const lastDone=p=>{ const l=S.logs.find(x=>x.planId===p.id); return l?l.date:"0000"; };
+  return rot.reduce((best,p)=>lastDone(p)<lastDone(best)?p:best, rot[0]).id;
 }
 function nextRow(){
   const pv=prof().vacation;
@@ -1634,6 +1655,42 @@ function vToday(){
 function tile(k,color,icon,title,val,unit,sub){
   return `<button class="tile" data-act="sub" data-key="progSub" data-k="${k}"><span class="tt" style="color:${color}">${icon}${title}</span><span class="tv">${val}<small>${unit||""}</small></span><span class="ts">${sub||""}</span></button>`;
 }
+/* «Bist du auf Kurs?» – messbare Ergebnisse nach 4–8 Wochen */
+function sessionE1(l,name){ const e=(l.entries||[]).find(x=>x.name===name); if(!e) return 0; const ws=workSets(e); return Math.max(0,...ws.map(x=>e1rm(num(x.w)||0,num(x.r)||0))); }
+function courseRows(){
+  const rows=[]; const today=todayStr();
+  const st={ok:["var(--good)","✓"],warn:["var(--warn)","!"],wait:["#8E8E93","…"]};
+  const add=(k,title,sub,val,tab)=>rows.push({k,title,sub,val,tab});
+  /* Kraft: die 4 am häufigsten trainierten Übungen mit Gewicht */
+  const cnt={}; S.logs.forEach(l=>(l.entries||[]).forEach(e=>{ if(!/assist/i.test(e.name) && workSets(e).some(x=>num(x.w)>0)) cnt[e.name]=(cnt[e.name]||0)+1; }));
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,4);
+  top.forEach(n=>{
+    const ls=S.logs.filter(l=>sessionE1(l,n)>0).sort((a,b)=>a.date<b.date?-1:1); if(!ls.length) return;
+    const cur=ls.at(-1); const base=[...ls].reverse().find(l=>l.date<=addDays(cur.date,-21)) || ls[0];
+    const now=sessionE1(cur,n), then=sessionE1(base,n); const span=Math.round((new Date(cur.date+"T12:00:00")-new Date(base.date+"T12:00:00"))/864e5);
+    if(base===cur || span<21) add("wait",esc(n),`Startwert ${fmtKg(Math.round(now))} kg (gesch. 1RM) · Vergleich ab ${fmtDate(addDays(ls[0].date,28))}`,null,"kraft");
+    else { const d=(now-then)/then*100; add(d>=1?"ok":d>-3?"wait":"warn",esc(n),`gesch. 1RM ${fmtKg(Math.round(then))} → ${fmtKg(Math.round(now))} kg in ${Math.round(span/7)} Wochen`,(d>=0?"+":"")+fmt1(Math.round(d*10)/10)+" %","kraft"); }
+  });
+  /* Gewicht */
+  const T=bwTrend();
+  if(T.slope==null) add("wait","Gewichtstrend",`noch zu wenig Messungen (${T.n} von 5 in 14 Tagen)`,null,"gewicht");
+  else { const sl=T.slope; const k=sl<=-0.3&&sl>=-0.6?"ok":(sl<-0.6||sl>0.1)?"warn":"wait";
+    add(k,"Gewichtstrend",k==="ok"?"im Zielbereich −0,3 bis −0,6 kg/Woche":sl<-0.6?"zu schnell, etwas mehr essen":sl>0.1?"steigt, eine Faust Kohlenhydrate weniger":"fast stabil, Ziel −0,3 bis −0,6",(sl>0?"+":"")+fmt1(Math.round(sl*100)/100)+" kg/W","gewicht"); }
+  /* Sätze pro Muskel */
+  const sp=setsPerMuscle(daysAgo(6)); const M=MAIN_MUSCLES.slice(0,9); const inB=M.filter(m=>(sp[m]||0)>=10&&(sp[m]||0)<=20).length;
+  const low=M.filter(m=>(sp[m]||0)<10);
+  add(inB>=7?"ok":"warn","Sätze pro Muskel",inB>=7?"fast alle Muskeln im Bereich 10–20":"zu wenig: "+low.slice(0,3).join(", ")+(low.length>3?" …":""),`${inB}/9`,"muskeln");
+  /* Schlaf */
+  const n7=nights().filter(x=>x.date>=daysAgo(6)); const a=n7.length?n7.reduce((s,x)=>s+x.sleepH,0)/n7.length:null;
+  if(a==null) add("wait","Schlaf","noch keine Daten",null,"erholung");
+  else add(a>=7.5?"ok":a>=7?"wait":"warn","Schlaf",`Ø letzte ${n7.length} Nächte · Ziel ${SLEEP_GOAL} h`,fmtH(a),"erholung");
+  return rows.map(r=>({...r,col:st[r.k][0],sym:st[r.k][1]}));
+}
+function courseCard(){
+  const rows=courseRows(); if(!rows.length) return "";
+  return `<div class="sechead">Bist du auf Kurs?</div><div class="glist">${rows.map(r=>grow(`<b style="font-size:15px;color:#fff">${r.sym}</b>`,r.col,r.title,r.sub,r.val,["sub","progSub",r.tab])).join("")}</div>
+  <p class="secfoot">Woran man nach 4–8 Wochen sieht, ob Plan und App stimmen: Das geschätzte 1RM steigt, das Gewicht sinkt langsam, die Muskeln bekommen genug Sätze und du schläfst genug. ✓ auf Kurs · ! anpassen · … noch zu früh.</p>`;
+}
 function progressSummary(){
   /* strength */
   const names=[...new Set(S.logs.flatMap(l=>(l.entries||[]).map(e=>e.name)))];
@@ -1647,12 +1704,13 @@ function progressSummary(){
   const km=allRuns().filter(r=>isoWeek(r.date)===isoWeek()).reduce((a,r)=>a+(+r.km||0),0);
   const wm=weekMinutes(isoWeek());
   const strains=wk.filter(d=>d<=todayStr()).map(d=>dayStrain(d).strain); const avgStrain=strains.length?strains.reduce((a,b)=>a+b,0)/strains.length:0;
-  return `<div class="tiles">
+  const estAny=wk.filter(d=>d<=todayStr()).some(d=>dayStrain(d).items.some(i=>i.est));
+  return `${courseCard()}<div class="sechead">Übersicht</div><div class="tiles">
     ${tile("kraft","var(--c-kraft)",I2.dumb,"Kraft",kVal,kVal==="–"?"":"kg",kSub)}
     ${tile("muskeln","var(--c-veg)",I2.chart,"Sätze pro Muskel",inBand,"/ 9","im Zielbereich 10–20")}
     ${tile("gewicht","var(--c-prot)",I2.scale,"Gewicht",last?fmt1(last.kg.toFixed(1)):"–",last?"kg":"",last?"zuletzt "+fmtDate(last.date):"noch nichts eingetragen")}
     ${tile("erholung","var(--c-sleep)",I2.moon,"Schlaf",avgS?fmtH(avgS).replace(" h ",":"):"–","",avgS?"Ø diese Woche":"keine Daten")}
-    ${tile("belastung","var(--c-strain)",I2.bolt,"Belastung",fmt1(Math.round(avgStrain*10)/10),"/ 21",`Ø pro Tag · ${wm.min} min Training`)}
+    ${tile("belastung","var(--c-strain)",I2.bolt,"Belastung",fmt1(Math.round(avgStrain*10)/10),"/ 21",`Ø pro Tag · ${wm.min} min Training${estAny?" · teils geschätzt":""}`)}
     ${tile("laufen","var(--c-lauf)",I2.run,"Laufen",fmt1(km.toFixed(1)),"km","diese Woche")}
     ${(()=>{ const t=stepsOn(todayStr()); const l7=[1,2,3,4,5,6,7].map(i=>stepsOn(daysAgo(i))).filter(v=>v!=null); const a=l7.length?l7.reduce((x,y)=>x+y,0)/l7.length:null; return tile("schritte","var(--c-veg)",'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 3c1.7 0 3 2 3 4.5S9.7 12 8 12 5 10 5 7.5 6.3 3 8 3zm-2 11h4v2.5a2 2 0 0 1-4 0zM16 7c1.7 0 3 2 3 4.5S17.7 16 16 16s-3-2-3-4.5S14.3 7 16 7zm-2 11h4v1.5a2 2 0 0 1-4 0z"/></svg>',"Schritte",t!=null?fmtInt(t):"–","",a!=null?`Ø ${fmtInt(a)} · Ziel ${fmtInt(STEP_GOAL)}`:`Ziel ${fmtInt(STEP_GOAL)}`); })()}
     ${(()=>{ const a=kcalAvg7(); return tile("kalorien",KCAL_COL,I_FLAME,"Kalorien",a?fmtInt(a.t):"–",a?"kcal":"",a?`Ø 7 Tage · ${fmtInt(a.a)} aktiv`:"noch keine Daten"); })()}
