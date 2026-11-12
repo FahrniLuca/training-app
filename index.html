@@ -418,7 +418,7 @@ const isCompound = e => e.compound!=null ? !!e.compound : (COMPOUND.has(e.name) 
 const restFor = e => isCompound(e) ? "2–3 min" : "1,5–2 min";
 function defaultReps(e){ if(/seitheben|wade|face pull|reverse butterfly/i.test(e.name||"")) return "10-15"; if(/bankdrück|t-bar|schulterdrück|kniebeuge|kreuzheb|hack-squat|beinpresse/i.test(e.name||"")) return "5-8"; return isCompound(e)?"6-10":"8-12"; }
 function parseRange(r, comp){ const m=String(r||"").match(/(\d+)\s*[-–]\s*(\d+)/); if(m) return [+m[1],+m[2]]; const one=String(r||"").match(/^\s*(\d+)\s*$/); if(one) return [+one[1],+one[1]]; return comp?[6,10]:[8,12]; }
-function weightStep(e,w){ if(/kurzhantel/i.test(e.name)) return 2; if(/langhantel|t-bar|kniebeuge|kreuzheb|hip thrust|bankdrücken/i.test(e.name)) return 2.5; return Math.max(2.5, Math.round(w*0.05/2.5)*2.5); }
+function weightStep(e,w){ if(/kurzhantel|schrägbank-curl|seitheben|hammer-curls kh/i.test(e.name)) return 2; if(/langhantel|t-bar|kniebeuge|kreuzheb|hip thrust|bankdrücken/i.test(e.name)) return 2.5; return Math.max(2.5, Math.round(w*0.05/2.5)*2.5); }
 const fmtKg = v => (Math.round(v*100)/100).toString().replace(".",",");
 /* double progression: reps first, then weight */
 function progression(e){
@@ -426,7 +426,7 @@ function progression(e){
   const last=lastSetsFor(e.name);
   const comp=isCompound(e); const [lo,hi]=parseRange(e.reps, comp);
   if(!last) return {kind:"new", lo, hi, text:`Gewicht wählen, mit dem du ${lo}–${hi} Wdh schaffst (1–2 in Reserve).`};
-  const sets=last.sets.filter(x=>num(x.r)>0);
+  const sets=workSets({sets:last.sets});
   if(!sets.length) return null;
   const ws=sets.map(x=>num(x.w)||0); const top=Math.max(...ws);
   const topSets=sets.filter(x=>(num(x.w)||0)===top);
@@ -436,8 +436,12 @@ function progression(e){
                             : {kind:"reps", lo, hi, target:sets.map(x=>Math.min(hi,num(x.r)+1)), text:`Eine Wiederholung mehr pro Satz, bis du überall ${hi} schaffst.`}; }
   if(assisted){ return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-5), text:`Ziel erreicht. Unterstützung um 5 kg verringern: ${fmtKg(Math.max(0,top-5))} kg, dann wieder ab ${lo} Wdh aufbauen.`}
                               : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,num(x.r)+1)), text:`Gleiche Unterstützung (${fmtKg(top)} kg), eine Wiederholung mehr pro Satz bis ${hi}.`}; }
-  if(allTop){ const nw=top+weightStep(e,top); return {kind:"up", lo, hi, w:nw, text:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
-  return {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,num(x.r)+1)), text:`${fmtKg(top)} kg, pro Satz +1 Wdh (bis ${hi}).`};
+  const rirs=topSets.map(x=>x.rir==null||x.rir===""?null:num(x.rir)).filter(v=>v!=null);
+  const easy=rirs.length && rirs.every(v=>v>=3);
+  if(allTop){ const st=weightStep(e,top); const nw=top+(easy?2*st:st); return {kind:"up", lo, hi, w:nw, text: easy?`Obere Grenze mit viel Reserve geschafft: ${fmtKg(nw)} kg (zwei Stufen), Ziel ${lo}+ Wdh.`:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
+  const under=topSets.filter(x=>num(x.r)<lo).length;
+  if(under && under>=Math.ceil(topSets.length/2)){ const nw=Math.max(0,top-weightStep(e,top)); return {kind:"down", lo, hi, w:nw, text:`Unter ${lo} Wdh gefallen: ${fmtKg(nw)} kg nehmen und wieder bis ${hi} Wdh aufbauen.`}; }
+  return {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,Math.max(lo,num(x.r)+1))), text:`${fmtKg(top)} kg, pro Satz +1 Wdh (bis ${hi}).`};
 }
 
 /* Evidence base, researched and cross-checked Nov 2026 */
@@ -472,7 +476,7 @@ window.SPLITS = {
 };
 
 window.NUTRI = function(kg){
-  const lo=Math.round(kg*1.6), hi=Math.round(kg*2.2), cut=Math.round(kg*2.0);
+  const lo=Math.round(kg*1.6/5)*5, hi=Math.round(kg*2.2), cut=Math.round(kg*2.0/5)*5;
   const kh1=Math.round(kg*1), kh2=Math.round(kg*2);
   const ph = (cls,label)=>`<span class="phase ${cls}">${label}</span>`;
   const step = (cls,label,title,text,ex)=>`<div class="tl-step"><div class="tl-dot ${cls}"></div><div class="tl-body">${ph(cls,label)}<b>${title}</b><p class="small">${text}</p>${ex?`<div class="ex-list">${ex.map(e=>`<span class="food">${e}</span>`).join("")}</div>`:""}</div></div>`;
@@ -484,15 +488,15 @@ window.NUTRI = function(kg){
     ruhe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     pille:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 8.5l5 7"/></svg>'
   };
-  const plate = [["--c-prot","Protein","1–2 Handflächen","Poulet, Rind, Fisch, Eier, Magerquark, Hüttenkäse, Skyr, Tofu. In jeder Mahlzeit."],
+  const plate = [["--c-prot","Protein","1–2 Handflächen","Poulet, Rind, Thunfisch, Eier, Skyr, Magerquark, Feta. In jeder Mahlzeit."],
                  ["--c-veg","Gemüse & Obst","Halber Teller","Macht satt mit wenig Energie."],
                  ["--c-carb","Kohlenhydrate","1–2 Fäuste","Reis, Kartoffeln, Pasta, Haferflocken, Brot. Mehr an Trainingstagen."],
-                 ["--c-fat","Fett","1 Daumen","Olivenöl, Nüsse, Avocado, Käse."]];
+                 ["--c-fat","Fett","1 Daumen","Rapsöl zum Anbraten, Olivenöl, Oliven, Feta, Butter sparsam."]];
   const day = (rows)=>`<div class="tablewrap"><table><tbody>${rows.map(r=>`<tr><td class="small muted" style="white-space:nowrap">${r[0]}</td><td>${r[1]}</td><td class="num" style="text-align:right;white-space:nowrap">${r[2]}</td></tr>`).join("")}</tbody></table></div>`;
   return `<section class="card hero-n">
     <div class="row between"><h2>Dein Tagesziel</h2><span class="pill">bei ${kg.toFixed(1)} kg</span></div>
     <div class="grid2">
-      <div class="stat tint" style="--t:var(--c-prot)"><span>Protein pro Tag</span><b>${cut}–${hi}</b><span>g, mindestens ${lo} g</span></div>
+      <div class="stat tint" style="--t:var(--c-prot)"><span>Protein pro Tag</span><b>${lo}–${cut}</b><span>g · mind. ${lo} g, ideal ~${cut} g. Über ${hi} g bringt nichts mehr (Morton 2018)</span></div>
       <div class="stat tint" style="--t:var(--c-carb)"><span>Pro Mahlzeit</span><b>30–40</b><span>g Protein, 4× täglich</span></div>
       <div class="stat tint" style="--t:var(--c-veg)"><span>Abnahme pro Woche</span><b>0,3–0,6</b><span>kg im Wochenschnitt</span></div>
     </div>
@@ -511,37 +515,37 @@ window.NUTRI = function(kg){
     <p class="small muted">Was du vor, während und nach dem Training isst. Tippe auf eine Trainingsart.</p>
     <div class="acc-list">
     ${acc("--c-kraft",I.kraft,"Krafttraining","Push, Pull, Beine, Arme",
-      step("pre","1–3 h vorher","Normale Mahlzeit","Ca. 35–40 g Protein plus Kohlenhydrate.",["Reis + Poulet + Gemüse","250 g Magerquark + Haferflocken + Banane","Wrap mit Truthahn"])+
+      step("pre","1–3 h vorher","Normale Mahlzeit","Ca. 35–40 g Protein plus Kohlenhydrate.",["Reis + Poulet + Gemüse","Skyr + Haferflocken + Banane","Toast mit Rührei"])+
       step("pre2","30–60 min vorher","Nur wenn du wenig Zeit hattest","Etwas Leichtes, nichts Fettiges.",["Banane","Reiswaffeln mit Honig","Joghurt"])+
       step("post","Innerhalb 1–3 h danach","Mahlzeit mit Protein","30–40 g Protein und Kohlenhydrate.",["Rührei + Brot + Gemüse","Shake + Haferflocken","Pasta mit Hackfleischsauce"])+
       `<p class="src">Helms 2014; ISSN 2017. Die Tagesmenge zählt mehr als das genaue Timing.</p>`)}
     ${acc("--c-hyrox",I.hyrox,"Hyrox","Intensiv, oft über 60 min",
       step("pre","2–3 h vorher","Kohlenhydrate tanken",`Ca. ${kh1}–${kh2} g Kohlenhydrate plus 20–30 g Protein, wenig Fett und Ballaststoffe.`,["Grosse Portion Pasta oder Reis + mageres Fleisch","Weissbrot mit Honig","Banane"])+
       step("during","Während (über 60 min)","Nachtanken","30–60 g Kohlenhydrate pro Stunde. Unter 60 min reicht Wasser.",["Sportgetränk","Gel","Banane"])+
-      step("post","Danach","Auffüllen","Protein und viele Kohlenhydrate, besonders wenn am nächsten Tag Training ist.",["Reis + Lachs","Kartoffeln + Rind","Skyr + Müesli + Früchte"])+
+      step("post","Danach","Auffüllen","Protein und viele Kohlenhydrate, besonders wenn am nächsten Tag Training ist.",["Reis + Poulet","Wedges + Steak","Skyr + Haferflocken + Früchte"])+
       `<p class="src">1–4 g Kohlenhydrate pro kg, 1–4 h vorher (Thomas, Erdman &amp; Burke 2016).</p>`)}
     ${acc("--c-lauf",I.lauf,"Laufen","Kurz, lang oder Laufband nach Kraft",
       step("pre","Unter 45 min","Keine Extra-Mahlzeit","Normal essen. Läufst du direkt nach dem Krafttraining, reicht die Mahlzeit davor.",null)+
       step("pre2","Über 60 min, 2–3 h vorher","Wie bei Hyrox","Kohlenhydratreich, wenig Fett.",["Toast + Konfitüre","Haferbrei + Banane"])+
       step("post","Danach","Normale Mahlzeit","Mit 30–40 g Protein.",["Poulet-Bowl","Omelett + Brot"]))}
     ${acc("--c-veg",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="10" cy="9" rx="6" ry="6.5"/><path d="M13.8 13.8L20 20M7.5 7h.01M10 9.5h.01M12.5 7h.01M7.5 11.5h.01M12.5 11.5h.01"/></svg>',"Padel","Intervalle, meist 60–90 min",
-      step("pre","2–3 h vorher","Kohlenhydrate + Protein",`Ca. ${kh1}–${Math.round(kg*1.5)} g Kohlenhydrate plus 20–30 g Protein, wenig Fett und Ballaststoffe.`,["Reis oder Pasta + Poulet","Sandwich mit Truthahn + Banane","Haferbrei + Früchte"])+
+      step("pre","2–3 h vorher","Kohlenhydrate + Protein",`Ca. ${kh1}–${Math.round(kg*1.5)} g Kohlenhydrate plus 20–30 g Protein, wenig Fett und Ballaststoffe.`,["Reis oder Pasta + Poulet","Toast mit Rührei + Banane","Haferbrei + Früchte"])+
       step("pre2","30–60 min vorher","Kleiner Snack","Nur wenn die letzte Mahlzeit länger her ist.",["Banane","Reiswaffeln mit Honig"])+
       step("during","Während","Trinken","Regelmässig Wasser. Spielst du länger als 60 min oder direkt nach dem Gym, 30–60 g Kohlenhydrate pro Stunde.",["Sportgetränk","Banane in der Pause"])+
       step("post","Danach","Protein, leicht verdaulich","30–40 g Protein. Spät am Abend lieber etwas Leichtes, damit du gut schläfst.",["Magerquark + Haferflocken","Skyr + Banane","Shake + Toast"])+
       `<p class="src">Kohlenhydrate vor und während Belastungen über 60 min: Thomas, Erdman &amp; Burke 2016.</p>`)}
     ${acc("--c-ruhe",I.ruhe,"Ruhetag","Kein Training",
       step("pre","Den ganzen Tag","Protein bleibt gleich","Auch an Ruhetagen 4× 30–40 g Protein, denn der Muskel baut jetzt auf.",null)+
-      step("pre2","Weniger","Kohlenhydrate eher 1 Faust","Dafür mehr Gemüse.",["Grosser Salat + Thunfisch","Gemüsepfanne + Tofu oder Poulet"]))}
+      step("pre2","Weniger","Kohlenhydrate eher 1 Faust","Dafür mehr Gemüse.",["Grosser Salat + Thunfisch","Gemüsepfanne + Poulet"]))}
     </div>
   </section>
 
   <section class="card">
     <h2>Beispieltage</h2>
     <div class="acc-list">
-    ${acc("--c-kraft",I.kraft,"Krafttag","≈ 165 g Protein",day([["Frühstück","3 Eier, 2 Scheiben Brot, Obst","≈ 25 g"],["Mittag","Reis, 150–200 g Poulet, Salat","≈ 40 g"],["Vor Training","250 g Magerquark, Haferflocken, Banane","≈ 35 g"],["Abend","Kartoffeln, Lachs oder Rind, Gemüse","≈ 40 g"],["Spät","Skyr oder Hüttenkäse","≈ 25 g"]]))}
-    ${acc("--c-hyrox",I.hyrox,"Hyrox-Tag","Mehr Kohlenhydrate",day([["Frühstück","Haferbrei mit Milch, Banane, Honig","≈ 20 g"],["Mittag (3 h vorher)","Grosse Portion Pasta, Pouletbrust","≈ 40 g"],["Während","Sportgetränk","—"],["Danach","Reis, Lachs, Gemüse","≈ 40 g"],["Abends","Skyr mit Müesli und Früchten","≈ 30 g"]]))}
-    ${acc("--c-ruhe",I.ruhe,"Ruhetag","Weniger Kohlenhydrate",day([["Frühstück","Rührei, 1 Scheibe Brot, Tomaten","≈ 25 g"],["Mittag","Grosser Salat mit Thunfisch und Bohnen","≈ 40 g"],["Zvieri","Hüttenkäse mit Gurke","≈ 25 g"],["Abend","Gemüsepfanne mit Rind","≈ 40 g"],["Spät","Magerquark","≈ 30 g"]]))}
+    ${acc("--c-kraft",I.kraft,"Krafttag","≈ 165 g Protein",day([["Frühstück","3 Eier, 2 Scheiben Brot, Obst","≈ 25 g"],["Mittag","Reis, 150–200 g Poulet, Salat","≈ 40 g"],["Vor Training","250 g Skyr, Haferflocken, Banane","≈ 30 g"],["Abend","Pasta mit Hackfleisch, Pelati und Paprika","≈ 40 g"],["Nach Training","Proteinshake mit Milch","≈ 35 g"]]))}
+    ${acc("--c-hyrox",I.hyrox,"Hyrox-Tag","Mehr Kohlenhydrate",day([["Frühstück","Haferbrei mit Milch, Banane, Honig","≈ 20 g"],["Mittag (3 h vorher)","Grosse Portion Pasta, Pouletbrust","≈ 40 g"],["Während","Sportgetränk","—"],["Danach","Reis, Poulet, Gemüse + Shake","≈ 50 g"],["Abends","Skyr mit Müesli und Früchten","≈ 30 g"]]))}
+    ${acc("--c-ruhe",I.ruhe,"Ruhetag","Weniger Kohlenhydrate",day([["Frühstück","Rührei, 1 Scheibe Brot, Tomaten","≈ 25 g"],["Mittag","Grosser Salat mit Thunfisch und Bohnen","≈ 40 g"],["Zvieri","Skyr mit TK-Heidelbeeren","≈ 25 g"],["Abend","Gemüsepfanne mit Rind","≈ 40 g"],["Spät","Magerquark","≈ 30 g"]]))}
     </div>
     <p class="small muted">Rezepte aus dem, was du zu Hause hast: einfach Claude im Chat fragen.</p>
   </section>
@@ -814,13 +818,21 @@ function scheduleIdle(){ clearTimeout(idleT); idleT=setTimeout(()=>{ if(pendingR
 document.addEventListener("focusout", ()=>{ if(pendingRender) scheduleIdle(); });
 
 /* ---------- derived ---------- */
+/* Aufwärmsätze: <70 % des schwersten Satzes der Übung oder ≥5 Wdh in Reserve. Zählen nicht als Arbeitssätze. */
+function isWarmup(s, sets){
+  const rir=s.rir==null||s.rir===""?null:num(s.rir);
+  if(rir!=null && rir>=5) return true;
+  const top=Math.max(0,...(sets||[]).map(x=>num(x.w)||0)); const w=num(s.w)||0;
+  return top>0 && w>0 && w<0.7*top;
+}
+function workSets(e){ const sets=(e.sets||[]).filter(x=>num(x.r)>0); return sets.filter(x=>!isWarmup(x,sets)); }
 function lastSetsFor(name){
   for(const l of S.logs){ const e=(l.entries||[]).find(x=>x.name===name); if(e && e.sets && e.sets.length) return {date:l.date, sets:e.sets}; }
   return null;
 }
 function setsPerMuscle(fromDate){
   const out={};
-  for(const l of S.logs){ if(l.date<fromDate) continue; for(const e of (l.entries||[])){ const m=e.muscle||LIBMAP[e.name]?.muscle||"Unbekannt"; const n=(e.sets||[]).filter(s=>num(s.r)>0).length; out[m]=(out[m]||0)+n; for(const sm of secOf(e)){ if(sm!==m) out[sm]=(out[sm]||0)+n*0.5; } } }
+  for(const l of S.logs){ if(l.date<fromDate) continue; for(const e of (l.entries||[])){ const m=e.muscle||LIBMAP[e.name]?.muscle||"Unbekannt"; const n=workSets(e).length; out[m]=(out[m]||0)+n; for(const sm of secOf(e)){ if(sm!==m) out[sm]=(out[sm]||0)+n*0.5; } } }
   return out;
 }
 function bwSorted(){ return [...S.bw].filter(x=>x.kg).sort((a,b)=>a.date<b.date?-1:1); }
@@ -954,7 +966,7 @@ function vFortschritt(part){
   if(sel){ [...S.logs].reverse().forEach(l=>{ const e=(l.entries||[]).find(x=>x.name===sel); if(!e) return; let best=0,top=0,vol=0; (e.sets||[]).forEach(s=>{ const w=num(s.w)||0,r=num(s.r)||0; best=Math.max(best,e1rm(w,r)); top=Math.max(top,w); vol+=w*r; }); if(best) pts.push({date:l.date,e1rm:best,top,vol}); }); }
   const wkFrom = daysAgo(6);
   const spm = setsPerMuscle(wkFrom);
-  const main=["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden"];
+  const main=["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden","Bauch"];
   const secK = `<section class="card">
     <div class="row between"><h2>Kraft pro Übung</h2></div>
     ${names.length?`<select id="prog_sel" aria-label="Übung wählen">${names.map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("")}</select>
@@ -968,8 +980,8 @@ function vFortschritt(part){
   </section>`;
   const secM = `<section class="card">
     <div class="row between"><h2>Sätze pro Muskel</h2><span class="pill">letzte 7 Tage</span></div>
-    <div class="list" style="gap:8px">${main.map(m=>{ const n=spm[m]||0; return `<div class="musclerow"><span>${m}</span><div class="bar" title="Grüner Bereich 10–20 Sätze"><span class="band" style="left:${10/25*100}%;width:${10/25*100}%"></span><i style="width:${Math.min(100,n/25*100)}%"></i></div><span class="num" style="text-align:right">${String(Math.round(n*2)/2).replace(".",",")}</span></div>`; }).join("")}</div>
-    <p class="small muted">Grüner Bereich: 10–20 harte Sätze pro Woche, der Bereich mit dem besten Verhältnis von Aufwand zu Wachstum. Direkte Sätze zählen 1, mitbeteiligte Muskeln 0,5 (z. B. Bankdrücken: 1 Satz Brust, je 0,5 für Trizeps und Schulter). Die mitbeteiligten Muskeln stellst du pro Übung unter „Pläne → Bearbeiten“ ein.</p>
+    <div class="list" style="gap:8px">${main.map(m=>{ const n=spm[m]||0; const st=n<0.5?["Fehlt","var(--bad)"]:n<10?["Zu wenig","var(--warn)"]:n<=20?["Gut","var(--good)"]:["Viel","var(--accent)"]; return `<div class="musclerow"><span>${m}<br><span class="small" style="color:${st[1]}">${st[0]}</span></span><div class="bar" title="Grüner Bereich 10–20 Sätze"><span class="band" style="left:${10/25*100}%;width:${10/25*100}%"></span><i style="width:${Math.min(100,n/25*100)}%"></i></div><span class="num" style="text-align:right">${String(Math.round(n*2)/2).replace(".",",")}</span></div>`; }).join("")}</div>
+    <p class="small muted">Grüner Bereich: 10–20 harte Sätze pro Woche, der Bereich mit dem besten Verhältnis von Aufwand zu Wachstum. Aufwärmsätze (unter 70 % des schwersten Satzes oder 5+ Wdh in Reserve) zählen nicht. Direkte Sätze zählen 1, mitbeteiligte Muskeln 0,5 (z. B. Bankdrücken: 1 Satz Brust, je 0,5 für Trizeps und Schulter). Die mitbeteiligten Muskeln stellst du pro Übung unter „Pläne → Bearbeiten“ ein.</p>
   </section>`;
   return part==="muskeln"?secM:secK;
 }
@@ -1021,7 +1033,14 @@ function vBody(sub){
     <div class="form g2"><label class="f">Datum<input type="date" id="bw_date" value="${todayStr()}"></label><label class="f">Gewicht (kg)<input class="num" inputmode="decimal" id="bw_kg" placeholder="${last?last.kg:"80.0"}"></label></div>
     <button class="primary" data-act="addbw">Gewicht eintragen</button>
     ${bw.length?`<div class="grid2"><div class="stat"><span>Aktuell</span><b>${last.kg.toFixed(1)}</b><span>kg</span></div><div class="stat"><span>Schnitt 7 Tage</span><b>${a7?a7.toFixed(1):"–"}</b><span>${a7&&aPrev?`${(a7-aPrev>=0?"+":"")+(a7-aPrev).toFixed(1)} kg zur Vorwoche`:"kg"}</span></div><div class="stat"><span>Seit Start</span><b>${(last.kg-bw[0].kg>=0?"+":"")+(last.kg-bw[0].kg).toFixed(1)}</b><span>kg seit ${fmtDate(bw[0].date)}</span></div></div>
-    <div class="chart">${lineChart(bw.map(b=>({x:b.date,y:b.kg})),{color:"var(--plate-red)"})}</div>`:`<p class="muted">Am aussagekräftigsten: morgens nach dem WC, vor dem Essen, 3–7× pro Woche wiegen. Der Wochenschnitt zählt, nicht der einzelne Tag.</p>`}
+    ${(()=>{ const T=bwTrend(); const s=T.slope; const msg = s==null?`Für den Trend brauche ich mindestens 5 Messungen in 14 Tagen (bisher ${T.n}).`
+        : s<-0.6?`Du nimmst ${fmt1((-s).toFixed(2))} kg pro Woche ab, schneller als das Ziel (0,3–0,6). Iss etwas mehr, sonst leidet der Muskelaufbau.`
+        : s<=-0.3?`Du nimmst ${fmt1((-s).toFixed(2))} kg pro Woche ab, genau im Ziel (0,3–0,6).`
+        : s<0.15?`Gewicht ziemlich stabil (${s>=0?"+":""}${fmt1(s.toFixed(2))} kg pro Woche). Bleibt das 2 Wochen so: eine Faust Kohlenhydrate pro Tag weniger.`
+        : `Gewicht steigt (+${fmt1(s.toFixed(2))} kg pro Woche). Prüfe die Portionen, wenn das 2 Wochen so bleibt.`;
+      return `<div class="banner" style="border-left-color:${s!=null&&s<=-0.3&&s>=-0.6?"var(--good)":"var(--warn)"}"><p class="small"><b>Trend:</b> ${msg}</p></div>
+      <h3>7-Tage-Mittel</h3><div class="chart">${lineChart(T.roll,{color:"var(--plate-red)"})}</div>
+      <p class="small muted">Einzelne Tage schwanken um 1–2 kg (Wasser, Salz, Essen). Der Trend wird über die letzten 14 Tage berechnet.</p>`; })()}`:`<p class="muted">Am aussagekräftigsten: morgens nach dem WC, vor dem Essen, 3–7× pro Woche wiegen. Der Wochenschnitt zählt, nicht der einzelne Tag.</p>`}
   </section>`;
 }
 
@@ -1284,6 +1303,17 @@ function vTraining(){
 
 /* ---------- recovery score (simplified, own baseline) ---------- */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* HRV nach Plews et al.: 7-Tage-Schnitt von ln(HRV) gegen den persönlichen Normalbereich (Mittel ± 0,5 SD der letzten 30 Tage) */
+function hrvTrend(date){
+  const rows=S.garmin.filter(x=>x.hrv>0 && x.date<=date && x.date>=daysAgo(30)).sort((a,b)=>a.date<b.date?-1:1);
+  if(rows.length<5) return null;
+  const ln=rows.map(x=>Math.log(x.hrv)); const mean=ln.reduce((a,b)=>a+b,0)/ln.length;
+  const sd=Math.max(0.05,Math.sqrt(ln.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,ln.length-1)));
+  const last7=rows.filter(x=>x.date>=addDays(date,-6)).map(x=>Math.log(x.hrv));
+  const r=last7.reduce((a,b)=>a+b,0)/last7.length;
+  return {z:(r-mean)/sd, roll:Math.round(Math.exp(r)), lo:Math.round(Math.exp(mean-0.5*sd)), hi:Math.round(Math.exp(mean+0.5*sd)), n:rows.length};
+}
+function addDays(d,n){ const t=new Date(d+"T12:00:00"); t.setDate(t.getDate()+n); return t.toISOString().slice(0,10); }
 function recovery(){
   const g=lastNight(); if(!g) return null;
   const rows=S.garmin.filter(x=>x.date!==g.date && x.date>=daysAgo(30));
@@ -1292,7 +1322,8 @@ function recovery(){
   const sS=clamp((g.sleepH-4)/(SLEEP_GOAL-4),0,1)*100;
   parts.push({k:"Schlaf",v:sS,w:.4,txt:fmtH(g.sleepH)});
   const MINB=5;
-  if(g.hrv && hv.length>=MINB){ const b=median(hv); parts.push({k:"HRV",v:clamp(50+(g.hrv/b-1)*250,0,100),w:.35,txt:`${g.hrv} ms (Basis ${Math.round(b)})`}); }
+  const H=hrvTrend(g.date);
+  if(H){ parts.push({k:"HRV",v:clamp(50+H.z*20,0,100),w:.35,txt:`Ø 7 Tage ${H.roll} ms (normal ${H.lo}–${H.hi})`}); }
   if(g.rhr && rv.length>=MINB){ const b=median(rv); parts.push({k:"Ruhepuls",v:clamp(50-(g.rhr-b)*10,0,100),w:.25,txt:`${g.rhr} bpm (Basis ${Math.round(b)})`}); }
   const wsum=parts.reduce((a,p)=>a+p.w,0);
   let score=Math.round(parts.reduce((a,p)=>a+p.v*p.w,0)/wsum);
@@ -1425,17 +1456,23 @@ function loadCard(){
 
 /* ===== strain (Banister TRIMP, mapped to 0–21, non-linear) ===== */
 const AGE = new Date().getFullYear()-2002;
-const HRMAX = Math.round(208-0.7*AGE); /* Tanaka 2001 estimate */
+const HRMAX_FORMULA = Math.round(208-0.7*AGE); /* Tanaka 2001 */
+let HRMAX = HRMAX_FORMULA;
+function updHrMax(){ const obs=Math.max(0,...S.garmin.filter(x=>x.date>=daysAgo(90)).flatMap(x=>(x.activities||[]).map(a=>+a.maxHr||0))); HRMAX=Math.max(HRMAX_FORMULA,obs); }
 function rhrRef(){ const v=S.garmin.filter(x=>x.rhr>0 && x.sleepH!=null && x.date>=daysAgo(30)).map(x=>x.rhr); return median(v)||55; }
 function trimp(min,avg){ if(!min||!avg) return 0; const r=rhrRef(); const x=clamp((avg-r)/(HRMAX-r),0,1); return min*x*0.64*Math.exp(1.92*x); }
 const to21 = t => 21*(1-Math.exp(-t/81));
 function dayStrain(d){
+  updHrMax();
   const items=[];
+  const rpeLogs=S.logs.filter(l=>l.date===d && l.rpe>0 && l.durationMin>0);
   const g=S.garmin.find(x=>x.date===d);
-  (g?.activities||[]).forEach(a=>{ const t=trimp(a.min, a.avgHr||(a.type&&/strength/.test(a.type)?110:130)); items.push({name:a.name||a.type, start:a.start, min:a.min, t, kind:/run|lauf/i.test(a.type||"")?"lauf":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":/hiit|hyrox/i.test((a.type||"")+(a.name||""))?"hyrox":"other"}); });
+  (g?.activities||[]).forEach(a=>{ if(rpeLogs.length && /strength/.test(a.type||"")) return; const t=trimp(a.min, a.avgHr||(a.type&&/strength/.test(a.type)?110:130)); items.push({name:a.name||a.type, start:a.start, min:a.min, t, kind:/run|lauf/i.test(a.type||"")?"lauf":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":/hiit|hyrox/i.test((a.type||"")+(a.name||""))?"hyrox":"other"}); });
   S.runs.filter(r=>r.date===d).forEach(r=>{ const t=trimp(r.min||r.km*6, 150); items.push({name:"Lauf (manuell)", min:r.min, t, kind:"lauf"}); });
-  const sets=S.logs.filter(l=>l.date===d).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+(e.sets||[]).filter(s=>num(s.r)>0).length,0),0);
-  if(sets) items.push({name:"Harte Sätze (Muskelbelastung)", sets, t:sets*1.2, kind:"kraft"});
+  /* Session-RPE (Foster 2001): Härte 1–10 × Minuten. Umrechnung ÷6 auf die TRIMP-Skala (60 min bei RPE 7 ≈ 70). */
+  rpeLogs.forEach(l=>items.push({name:(l.planName||"Training")+` (Härte ${l.rpe})`, min:l.durationMin, t:l.rpe*l.durationMin/6, kind:"kraft"}));
+  const sets=S.logs.filter(l=>l.date===d && !(l.rpe>0 && l.durationMin>0)).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+workSets(e).length,0),0);
+  if(sets) items.push({name:"Harte Sätze (Schätzung, Härte fehlt)", sets, t:sets*1.2, kind:"kraft"});
   /* Alltag: Schritte ausserhalb der Trainings, als lockeres Gehen (~100 Schritte/min bei ~33 % Herzfrequenzreserve) */
   if(g && g.steps>0){
     const actSteps=(g.activities||[]).reduce((a,x)=>a+(x.steps!=null?+x.steps:(/run|walk|treadmill|hik/i.test(x.type||"")&&x.km?x.km*1300:0)),0);
@@ -1487,7 +1524,7 @@ function ringsCard(){
     <details class="info-d"><summary>Details und Berechnung</summary><div style="padding-top:8px">
       ${r?`<div class="parts">${r.parts.map(p=>`<div class="part"><span class="small muted">${p.k}</span><div class="bar"><i style="width:${Math.round(p.v)}%;background:${p.v>=67?"var(--good)":p.v>=34?"var(--warn)":"var(--bad)"}"></i></div><span class="small">${esc(p.txt)}</span></div>`).join("")}</div>`:""}
       ${r&&r.parts.length<3?`<p class="small muted">HRV und Ruhepuls zählen ab ${r.needB} Nächten Basis (jetzt ${r.baseN}).</p>`:""}
-      <p class="small muted"><b>Belastung</b> (0–21): Dauer × Puls im Verhältnis zu Ruhepuls (${rhrRef()}) und geschätztem Maximalpuls (${HRMAX}), hohe Pulse zählen überproportional (Banister-TRIMP). Harte Sätze aus deinem Log zählen zusätzlich, weil der Puls Krafttraining unterschätzt. Auch Bewegung im Alltag zählt: Schritte ausserhalb der Trainings werden als lockeres Gehen gerechnet (etwa 5000 Schritte ≈ 4, 10 000 ≈ 8). Nicht linear: von 10 auf 20 ist viel schwerer als von 0 auf 10. Das Ziel richtet sich nach deiner Erholung.</p>
+      <p class="small muted"><b>Belastung</b> (0–21): Dauer × Puls im Verhältnis zu Ruhepuls (${rhrRef()}) und geschätztem Maximalpuls (${HRMAX}), hohe Pulse zählen überproportional (Banister-TRIMP). Krafttraining zählt über deine Härte-Angabe nach dem Training × Minuten (Session-RPE, Foster 2001), weil der Puls Krafttraining unterschätzt; fehlt sie, schätzt die App über die Arbeitssätze. Maximalpuls: höchster gemessener Wert der letzten 90 Tage oder Formel (${HRMAX_FORMULA}). Auch Bewegung im Alltag zählt: Schritte ausserhalb der Trainings werden als lockeres Gehen gerechnet (etwa 5000 Schritte ≈ 4, 10 000 ≈ 8). Nicht linear: von 10 auf 20 ist viel schwerer als von 0 auf 10. Das Ziel richtet sich nach deiner Erholung.</p>
       <p class="small muted"><b>Erholung</b>: Schlaf 40 %, HRV 35 %, Ruhepuls 25 %, verglichen mit deinem 30-Tage-Median. <b>Schlaf</b>: Prozent von ${SLEEP_GOAL} Stunden. Vereinfachte, offene Formeln, keine medizinische Aussage.</p>
     </div></details>
   </section>`;
@@ -1505,7 +1542,11 @@ function nextRow(){
   const kraft=S.plans.filter(p=>(p.kind||"kraft")==="kraft" && (p.exercises||[]).length).sort((a,b)=>(a.order??99)-(b.order??99));
   if(!kraft.length) return "";
   const lastLog=S.logs.find(l=>l.planId && kraft.some(p=>p.id===l.planId));
-  let next=kraft[0]; if(lastLog){ const i=kraft.findIndex(p=>p.id===lastLog.planId); next=kraft[(i+1)%kraft.length]; }
+  /* flexibel: der Plan, der am längsten nicht mehr dran war; bei Gleichstand die Reihenfolge nach dem letzten Training */
+  let next=kraft[0];
+  if(lastLog){ const i=kraft.findIndex(p=>p.id===lastLog.planId); const rot=[...kraft.slice(i+1),...kraft.slice(0,i+1)];
+    const lastDone=p=>{ const l=S.logs.find(x=>x.planId===p.id); return l?l.date:"0000"; };
+    next=rot.reduce((best,p)=>lastDone(p)<lastDone(best)?p:best, rot[0]); }
   const r=recovery(); const adj=r&&r.level>=2?" · heute 1 Satz weniger":"";
   /* coach-planned session overrides rotation until its date has passed or it was done */
   const ps=prof().planned; const today=todayStr();
@@ -1517,14 +1558,14 @@ function nextRow(){
       <button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="start" data-id="${esc(pp.id)}" data-planned="1">Start</button></div>
       ${ps.note?`<p class="small muted">${esc(ps.note)}</p>`:""}</section>`; }
   }
-  /* nach Push folgt ein freier Tag (Ruhetag, Hyrox oder Beine), solange Beine noch keine Übungen hat */
-  if(lastLog && lastLog.planId==="push" && next.id!=="beine"){
+  /* nach dem letzten Plan der Reihe (Arme) folgt ein freier Tag: Pause oder Hyrox */
+  if(lastLog && kraft.length && lastLog.planId===kraft.at(-1).id){
     const since=Math.round((new Date(today+"T12:00:00")-new Date(lastLog.date+"T12:00:00"))/864e5);
     const flexDone=S.logs.some(l=>l.date>lastLog.date && l.date<=today && l.planId && !kraft.some(p=>p.id===l.planId)) || allRuns().some(r=>r.date>lastLog.date && r.date<=today);
     if(since<=1 && !flexDone){
       const hy=S.plans.find(p=>p.id==="hyrox");
       return `<div class="sechead">Als Nächstes</div><section class="card next" style="gap:10px">
-      <div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><h2>Ruhetag, Hyrox oder Beine</h2><span class="small muted">danach ${esc(next.name)}</span></div>
+      <div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><h2>Pause oder Hyrox</h2><span class="small muted">danach ${esc(next.name)}</span></div>
       ${hy?`<button class="primary" style="min-height:40px;padding:8px 18px;border-radius:20px" data-act="start" data-id="hyrox">Hyrox</button>`:""}</div></section>`;
     }
   }
@@ -1553,8 +1594,40 @@ function eveningList(){
     ${grow(I2.chart,"var(--c-strain)","Trainingszeit diese Woche","im Vergleich zu deinem Schnitt",mins+" min",["goto",null,null,"fortschritt","belastung"])}
   </div>`;
 }
+function rpeSheet(logId, mins){
+  const L=[[1,"Sehr leicht"],[2,"Leicht"],[3,"Moderat"],[4,"Etwas hart"],[5,"Hart"],[6,"Hart+"],[7,"Sehr hart"],[8,"Sehr hart+"],[9,"Fast maximal"],[10,"Maximal"]];
+  let w=document.getElementById("rpeSheet"); if(w) w.remove();
+  w=document.createElement("div"); w.id="rpeSheet"; w.className="sheetwrap";
+  w.innerHTML=`<div class="sheetbg"></div><div class="sheet"><h2>Wie hart war das Training?</h2>
+    <p class="small muted">Gesamteindruck der ganzen Einheit, etwa 30 Minuten danach am genauesten. Daraus berechnet die App deine Belastung (Session-RPE).</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">${L.map(([n,t])=>`<button data-rpe="${n}" style="min-height:58px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px"><b style="font-size:20px">${n}</b><span style="font-size:10px;line-height:1.1" class="muted">${t}</span></button>`).join("")}</div>
+    <label class="f">Dauer (Minuten)<input id="rpe_min" class="num" inputmode="numeric" value="${mins}"></label>
+    <button class="ghost" data-skip>Später</button></div>`;
+  document.body.appendChild(w);
+  const close=()=>w.remove();
+  w.querySelector(".sheetbg").onclick=close; w.querySelector("[data-skip]").onclick=()=>{ close(); toast("Training gespeichert"); };
+  w.querySelectorAll("[data-rpe]").forEach(b=>b.onclick=async()=>{ const m=Math.max(5,Math.min(300,num(w.querySelector("#rpe_min").value)||mins)); close(); await save("logs/"+logId,{rpe:+b.dataset.rpe,durationMin:m},"update"); toast("Training gespeichert"); render(); });
+}
+function weighRow(){
+  if(S.bw.some(x=>x.date===todayStr())) return "";
+  const last=bwSorted().at(-1);
+  return `<div class="sechead">Gewicht</div><section class="card" style="padding:12px 14px;gap:8px"><div class="row between" style="flex-wrap:nowrap;gap:10px">
+    <div style="min-width:0"><b>Heute noch nicht gewogen</b><div class="small muted">Morgens nach dem WC, vor dem Essen</div></div>
+    <input type="hidden" id="bw_date" value="${todayStr()}"><input class="num" inputmode="decimal" id="bw_kg" placeholder="${last?last.kg:"80.0"}" style="width:88px">
+    <button class="primary" data-act="addbw" style="min-height:40px;padding:8px 14px;border-radius:20px">OK</button></div></section>`;
+}
+/* Gewichtstrend: 7-Tage-Mittel + lineare Steigung der letzten 14 Tage (kg/Woche) */
+function bwTrend(){
+  const bw=bwSorted(); const r=bw.filter(x=>x.date>=daysAgo(13));
+  const roll=bw.map(b=>{ const win=bw.filter(x=>x.date<=b.date && x.date>=addDays(b.date,-6)); return {x:b.date,y:win.reduce((a,c)=>a+c.kg,0)/win.length}; });
+  if(r.length<5) return {roll, n:r.length, slope:null};
+  const t0=new Date(r[0].date+"T12:00:00").getTime(); const xs=r.map(b=>(new Date(b.date+"T12:00:00").getTime()-t0)/864e5), ys=r.map(b=>b.kg);
+  const mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ys.reduce((a,b)=>a+b,0)/ys.length;
+  const den=xs.reduce((a,x)=>a+(x-mx)**2,0); const slope=den?xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0)/den*7:0;
+  return {roll, n:r.length, slope};
+}
 function vToday(){
-  return `${ringsCard()}${weekBanner()}${nextRow()}${todayActivities()}${stepsRow()}${kcalRow()}${weekStripCompact()}${eveningList()}`;
+  return `${ringsCard()}${weekBanner()}${weighRow()}${nextRow()}${todayActivities()}${stepsRow()}${kcalRow()}${weekStripCompact()}${eveningList()}`;
 }
 
 /* ===== Fortschritt: Health-style summary + detail ===== */
@@ -1732,7 +1805,7 @@ function bind(){
     const a=b.dataset.act;
     if(a==="start"){
       const p=S.plans.find(x=>x.id===b.dataset.id);
-      const d={ id:uid(), date:todayStr(), planId:p?.id||null, planName:p?.name||"Freies Training", kind:p?.kind||"kraft", entries:(p?.exercises||[]).filter(e=>!(b.dataset.planned && (prof().planned?.skip||[]).includes(e.name))).map(e=>({name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||"",secondary:secOf(e),compound:isCompound(e),target:[e.sets?e.sets+"×":"",e.reps||"",e.weight?" @ "+e.weight+" kg":""].join(""),note:e.note||"",sets:Array.from({length:e.sets||3},()=>({w:"",r:"",rir:""}))})) };
+      const d={ id:uid(), startedAt:Date.now(), date:todayStr(), planId:p?.id||null, planName:p?.name||"Freies Training", kind:p?.kind||"kraft", entries:(p?.exercises||[]).filter(e=>!(b.dataset.planned && (prof().planned?.skip||[]).includes(e.name))).map(e=>({name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||"",secondary:secOf(e),compound:isCompound(e),target:[e.sets?e.sets+"×":"",e.reps||"",e.weight?" @ "+e.weight+" kg":""].join(""),note:e.note||"",sets:Array.from({length:e.sets||3},()=>({w:"",r:"",rir:""}))})) };
       setDraft(d); if(tab!=="training"){ location.hash="training"; } else { render(); scrollTop(); }
     }
     if(a==="cancel"){ const dd=readDraft(); const touched = dd && ((dd.note||"").trim() || (dd.entries||[]).some(e=>e.sets.some(x=>x.w!==""||x.r!==""||(x.rir??"")!==""))); if(!touched) b.dataset.confirm="1";
@@ -1747,7 +1820,7 @@ function bind(){
       if(d.kind!=="cardio" && !entries.length){ toast("Trage mindestens einen Satz oder eine Runde ein"); return; }
       b.disabled=true;
       const ok=await save("logs/"+d.id,{date:d.date,planId:d.planId,planName:d.planName,kind:d.kind||"kraft",durationMin:d.durationMin||null,note:d.note||"",entries,savedAt:new Date().toISOString()});
-      if(ok){ setDraft(null); toast("Training gespeichert"); render(); } else b.disabled=false;
+      if(ok){ const mins=d.startedAt?Math.round((Date.now()-d.startedAt)/60000):null; setDraft(null); render(); rpeSheet(d.id, mins&&mins>=10&&mins<=240?mins:60); } else b.disabled=false;
     }
     if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
     if(a==="editplan"){ ui.editPlan=b.dataset.id; planDraft=JSON.parse(JSON.stringify(S.plans.find(x=>x.id===ui.editPlan))); renderPlanDraft(); }
