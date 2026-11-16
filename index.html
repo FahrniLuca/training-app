@@ -1079,7 +1079,10 @@ function vBody(sub){
 /* ---------- sleep + readiness ---------- */
 const SLEEP_GOAL = 8; const STEP_GOAL = 10000;
 function nights(){ const m={}; S.sleep.forEach(x=>{ if(x.h>0) m[x.date]={date:x.date,sleepH:x.h,src:"manuell"}; }); S.garmin.forEach(x=>{ if(x.sleepH!=null) m[x.date]={...x,src:"Garmin"}; }); return Object.values(m).sort((a,b)=>a.date<b.date?1:-1); }
-function lastNight(){ const g=nights()[0]; if(!g) return null; const gd=S.garmin.find(x=>x.date===g.date)||{}; return (g.date>=daysAgo(1)) ? {...gd,...g} : null; }
+/* Schlaf-Tag: bis 06:30 gilt noch die Nacht von gestern, ab 06:30 nur die Nacht, aus der du heute aufgewacht bist */
+const SLEEP_SWITCH_MIN = 6*60+30;
+function sleepDay(){ const n=new Date(); return (n.getHours()*60+n.getMinutes()) < SLEEP_SWITCH_MIN ? addDays(todayStr(),-1) : todayStr(); }
+function lastNight(){ const d=sleepDay(); const g=nights().find(x=>x.date===d); if(!g) return null; const gd=S.garmin.find(x=>x.date===g.date)||{}; return {...gd,...g}; }
 function median(a){ if(!a.length) return null; const b=[...a].sort((x,y)=>x-y); const m=Math.floor(b.length/2); return b.length%2?b[m]:(b[m-1]+b[m])/2; }
 function baselines(excludeDate){
   const rows=S.garmin.filter(x=>x.date!==excludeDate && x.date>=daysAgo(30));
@@ -1560,7 +1563,7 @@ function ringsCard(){
       <div class="rlegend">
         <div class="rl"><span class="k" style="color:var(--c-strain)">Belastung</span><span class="v">${fmt1(ds.strain)}<small>/ 21</small></span><span class="s">Ziel ${tgt[0]}–${tgt[1]}${inT?" · erreicht ✓":ds.strain>tgt[1]?" · überschritten":""}${ds.items.some(i=>i.est)?" · geschätzt, Härte fehlt":""}</span></div>
         <div class="rl"><span class="k" style="color:${recCol}">Erholung</span><span class="v">${r?r.score:"–"}<small>%</small></span>${r&&r.hrvN<21?`<span class="s">noch unsicher · Basis ${r.hrvN} von 30 Tagen</span>`:""}</div>
-        <div class="rl"><span class="k" style="color:var(--c-sleep)">Schlaf</span><span class="v">${ln?fmtH(ln.sleepH).replace(" h ",":").replace(/^(\d+):/,"$1:"):"–"}<small>${ln?sleepPct+" %":""}</small></span></div>
+        <div class="rl"><span class="k" style="color:var(--c-sleep)">Schlaf</span><span class="v">${ln?fmtH(ln.sleepH).replace(" h ",":").replace(/^(\d+):/,"$1:"):"–"}<small>${ln?sleepPct+" %":""}</small></span>${ln?"":`<span class="s">letzte Nacht noch nicht synchronisiert</span>`}</div>
       </div></div>
     ${r?`<div class="verdict"><span class="dot" style="background:${recCol}"></span><div><b>${r.t}</b><p class="small muted">${r.d}</p></div></div>`:""}
     <details class="info-d"><summary>Details und Berechnung</summary><div style="padding-top:8px">
