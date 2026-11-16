@@ -441,16 +441,21 @@ function progression(e){
   const assisted=isAssisted(e.name);
   const ws=sets.map(x=>num(x.w)||0); const top=assisted&&ws.some(v=>v>0)?Math.min(...ws.filter(v=>v>0)):Math.max(...ws);
   const topSets=sets.filter(x=>(num(x.w)||0)===top);
+  /* Leichterer Satz nach dem schweren = Gewicht nicht mehr geschafft (Back-off). Dann erst steigern, wenn alle Sätze mit dem schweren Gewicht gehen. */
+  const fT=sets.findIndex(x=>(num(x.w)||0)===top);
+  const backoff=sets.some((x,i)=>i>fT && (assisted ? (num(x.w)||0)>top : (num(x.w)||0)<top));
   const allTop=topSets.length>=Math.min(sets.length,2) && topSets.every(x=>num(x.r)>=hi);
   if(top<=0){ return allTop ? {kind:"up", lo, hi, text:`Alle Sätze mit ${hi}+ Wdh geschafft. Zeit für Zusatzgewicht, z. B. 2,5–5 kg.`}
                             : {kind:"reps", lo, hi, target:sets.map(x=>Math.min(hi,num(x.r)+1)), text:`Eine Wiederholung mehr pro Satz, bis du überall ${hi} schaffst.`}; }
   if(assisted){ const u=unitOf(e.name), st=u==="lbs"?10:5;
+    if(allTop && backoff) return {kind:"reps", lo, hi, w:top, target:sets.map(()=>hi), text:`Letztes Mal ging der letzte Satz nicht mehr mit ${fmtKg(top)} ${u}. Ziel: alle Sätze mit ${fmtKg(top)} ${u} und ${hi} Wdh, dann weniger Unterstützung.`};
     return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-st), text:`Ziel erreicht. Unterstützung um ${st} ${u} verringern: ${fmtKg(Math.max(0,top-st))} ${u}, dann wieder ab ${lo} Wdh aufbauen.`}
                               : (topSets.filter(x=>num(x.r)<lo).length>=Math.ceil(topSets.length/2)
                                  ? {kind:"down", lo, hi, w:top+st, text:`Unter ${lo} Wdh gefallen: mehr Unterstützung, ${fmtKg(top+st)} ${u}, und wieder bis ${hi} Wdh aufbauen.`}
                                  : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,Math.max(lo,num(x.r)+1))), text:`Gleiche Unterstützung (${fmtKg(top)} ${u}), eine Wiederholung mehr pro Satz bis ${hi}. Weniger Unterstützung = schwerer.`}); }
   const rirs=topSets.map(x=>x.rir==null||x.rir===""?null:num(x.rir)).filter(v=>v!=null);
   const easy=rirs.length && rirs.every(v=>v>=3);
+  if(allTop && backoff) return {kind:"reps", lo, hi, w:top, target:sets.map(()=>hi), text:`Letztes Mal ging der letzte Satz nicht mehr mit ${fmtKg(top)} kg. Ziel: alle Sätze mit ${fmtKg(top)} kg und ${hi} Wdh, dann steigern.`};
   if(allTop){ const st=weightStep(e,top); const nw=top+(easy?2*st:st); return {kind:"up", lo, hi, w:nw, text: easy?`Obere Grenze mit viel Reserve geschafft: ${fmtKg(nw)} kg (zwei Stufen), Ziel ${lo}+ Wdh.`:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
   const under=topSets.filter(x=>num(x.r)<lo).length;
   if(under && under>=Math.ceil(topSets.length/2)){ const nw=Math.max(0,top-weightStep(e,top)); return {kind:"down", lo, hi, w:nw, text:`Unter ${lo} Wdh gefallen: ${fmtKg(nw)} kg nehmen und wieder bis ${hi} Wdh aufbauen.`}; }
