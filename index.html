@@ -444,10 +444,11 @@ function progression(e){
   const allTop=topSets.length>=Math.min(sets.length,2) && topSets.every(x=>num(x.r)>=hi);
   if(top<=0){ return allTop ? {kind:"up", lo, hi, text:`Alle Sätze mit ${hi}+ Wdh geschafft. Zeit für Zusatzgewicht, z. B. 2,5–5 kg.`}
                             : {kind:"reps", lo, hi, target:sets.map(x=>Math.min(hi,num(x.r)+1)), text:`Eine Wiederholung mehr pro Satz, bis du überall ${hi} schaffst.`}; }
-  if(assisted){ return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-5), text:`Ziel erreicht. Unterstützung um 5 kg verringern: ${fmtKg(Math.max(0,top-5))} kg, dann wieder ab ${lo} Wdh aufbauen.`}
+  if(assisted){ const u=unitOf(e.name), st=u==="lbs"?10:5;
+    return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-st), text:`Ziel erreicht. Unterstützung um ${st} ${u} verringern: ${fmtKg(Math.max(0,top-st))} ${u}, dann wieder ab ${lo} Wdh aufbauen.`}
                               : (topSets.filter(x=>num(x.r)<lo).length>=Math.ceil(topSets.length/2)
-                                 ? {kind:"down", lo, hi, w:top+5, text:`Unter ${lo} Wdh gefallen: mehr Unterstützung, ${fmtKg(top+5)} kg, und wieder bis ${hi} Wdh aufbauen.`}
-                                 : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,Math.max(lo,num(x.r)+1))), text:`Gleiche Unterstützung (${fmtKg(top)} kg), eine Wiederholung mehr pro Satz bis ${hi}. Weniger Unterstützung = schwerer.`}); }
+                                 ? {kind:"down", lo, hi, w:top+st, text:`Unter ${lo} Wdh gefallen: mehr Unterstützung, ${fmtKg(top+st)} ${u}, und wieder bis ${hi} Wdh aufbauen.`}
+                                 : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,Math.max(lo,num(x.r)+1))), text:`Gleiche Unterstützung (${fmtKg(top)} ${u}), eine Wiederholung mehr pro Satz bis ${hi}. Weniger Unterstützung = schwerer.`}); }
   const rirs=topSets.map(x=>x.rir==null||x.rir===""?null:num(x.rir)).filter(v=>v!=null);
   const easy=rirs.length && rirs.every(v=>v>=3);
   if(allTop){ const st=weightStep(e,top); const nw=top+(easy?2*st:st); return {kind:"up", lo, hi, w:nw, text: easy?`Obere Grenze mit viel Reserve geschafft: ${fmtKg(nw)} kg (zwei Stufen), Ziel ${lo}+ Wdh.`:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
@@ -834,7 +835,11 @@ document.addEventListener("focusout", ()=>{ if(pendingRender) scheduleIdle(); })
 /* Assistierte Übungen: weniger Unterstützung = schwerer. Effektive Last = Körpergewicht − Unterstützung */
 const isAssisted = name => /assist/i.test(name||"");
 function bwAt(date){ const b=(typeof bwSorted==="function"?bwSorted():[]).filter(x=>!date||x.date<=date); return b.length?b.at(-1).kg:(num(prof().startWeightKg)||80); }
-function effLoad(name,w,date){ w=num(w)||0; return isAssisted(name) ? Math.max(0,bwAt(date)-w) : w; }
+/* Einheit pro Übung: im Plan als unit:"lbs" hinterlegt; assistierte Maschinen im Topfit zeigen lbs */
+function unitOf(name){ for(const p of (S.plans||[])) for(const e of (p.exercises||[])) if(e.name===name && e.unit) return e.unit; return isAssisted(name)?"lbs":"kg"; }
+const LB=0.45359237;
+function toKg(name,w){ w=num(w)||0; return unitOf(name)==="lbs" ? w*LB : w; }
+function effLoad(name,w,date){ const k=toKg(name,w); return isAssisted(name) ? Math.max(0,bwAt(date)-k) : k; }
 function isWarmup(s, sets, name){
   const rir=s.rir==null||s.rir===""?null:num(s.rir);
   if(rir!=null && rir>=5) return true;
@@ -916,7 +921,7 @@ function exCard(e,i){
     ${pg?`<div class="prog ${pg.kind}"><b>${pg.kind==="up"?"Heute steigern":pg.kind==="reps"?"Heute":"Startgewicht"}</b><span class="small">${esc(pg.text)}</span></div>`:""}
     ${dist?`<div class="sets"><span class="h">#</span><span class="h">Meter</span><span class="h">Zeit</span><span class="h">kg</span><span></span>
     ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(e.reps||(last&&last.sets[j]?last.sets[j].m:"")||"")}" aria-label="Meter Runde ${j+1}"><input class="num" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="m:ss" aria-label="Zeit Runde ${j+1}"><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(last&&last.sets[j]&&last.sets[j].w?last.sets[j].w:"–")}" aria-label="Gewicht Runde ${j+1}"><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Runde löschen">−</button>`).join("")}
-    </div>`:`<div class="sets chk"><span class="h">#</span><span class="h">kg</span><span class="h">Wdh</span><span class="h">RIR</span><span></span><span></span>
+    </div>`:`<div class="sets chk"><span class="h">#</span><span class="h">${unitOf(e.name)}</span><span class="h">Wdh</span><span class="h">RIR</span><span></span><span></span>
     ${e.sets.map((s,j)=>`<span class="n">${j+1}</span><input class="num" inputmode="decimal" id="s_${i}_${j}_w" value="${esc(s.w)}" placeholder="${esc(phW(j))}" aria-label="Gewicht Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_r" value="${esc(s.r)}" placeholder="${esc(phR(j))}" aria-label="Wiederholungen Satz ${j+1}"><input class="num" inputmode="numeric" id="s_${i}_${j}_x" value="${esc(s.rir??"")}" placeholder="–" aria-label="Wiederholungen in Reserve Satz ${j+1}"><button class="setok${s.done?" on":""}" data-act="setok" data-i="${i}" data-j="${j}" aria-label="Satz ${j+1} erledigt">✓</button><button class="tiny ghost" data-act="rmset" data-i="${i}" data-j="${j}" aria-label="Satz löschen">−</button>`).join("")}
     </div>`}
     <div class="row"><button class="tiny" data-act="addset" data-i="${i}">+ ${dist?"Runde":"Satz"}</button><span class="small muted">${dist?"Zeit z. B. 2:05. Gewicht nur falls verwendet.":isHyroxEx(e)?"kg z. B. Ballgewicht.":"Graue Zahlen = Vorschlag, ✓ übernimmt sie. RIR = Wdh, die du noch geschafft hättest."}</span></div>
@@ -1915,7 +1920,7 @@ function bind(){
     const a=b.dataset.act;
     if(a==="start"){
       const p=S.plans.find(x=>x.id===b.dataset.id);
-      const d={ id:uid(), startedAt:Date.now(), date:todayStr(), planId:p?.id||null, planName:p?.name||"Freies Training", kind:p?.kind||"kraft", entries:(p?.exercises||[]).filter(e=>!(b.dataset.planned && (prof().planned?.skip||[]).includes(e.name))).map(e=>({name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||"",secondary:secOf(e),compound:isCompound(e),target:[e.sets?e.sets+"×":"",e.reps||"",e.weight?" @ "+e.weight+" kg":""].join(""),note:e.note||"",sets:Array.from({length:e.sets||3},()=>({w:"",r:"",rir:""}))})) };
+      const d={ id:uid(), startedAt:Date.now(), date:todayStr(), planId:p?.id||null, planName:p?.name||"Freies Training", kind:p?.kind||"kraft", entries:(p?.exercises||[]).filter(e=>!(b.dataset.planned && (prof().planned?.skip||[]).includes(e.name))).map(e=>({name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||"",secondary:secOf(e),compound:isCompound(e),target:[e.sets?e.sets+"×":"",e.reps||"",e.weight?" @ "+e.weight+" "+unitOf(e.name):""].join(""),note:e.note||"",sets:Array.from({length:e.sets||3},()=>({w:"",r:"",rir:""}))})) };
       setDraft(d); if(tab!=="training"){ location.hash="training"; } else { render(); scrollTop(); }
     }
     if(a==="cancel"){ const dd=readDraft(); const touched = dd && ((dd.note||"").trim() || (dd.entries||[]).some(e=>e.sets.some(x=>x.w!==""||x.r!==""||(x.rir??"")!==""))); if(!touched) b.dataset.confirm="1";
