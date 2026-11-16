@@ -13,6 +13,7 @@ docs={
  "plans/beine":{"name":"Beine","kind":"kraft","order":3,"exercises":[{"name":"Beinpresse","muscle":"Quadrizeps","reps":"5-8","sets":3}]},
  "logs/a":{"date":D(3),"planId":"push","planName":"Push","kind":"kraft","entries":[{"name":"Kurzhantel-Bankdrücken","muscle":"Brust","secondary":["Trizeps","Schultern"],"reps":"5-8","sets":[{"w":10,"r":10,"rir":6},{"w":24,"r":8,"rir":3},{"w":24,"r":8,"rir":3}]}]},
  "logs/b":{"date":D(2),"planId":"pull","planName":"Pull","kind":"kraft","entries":[{"name":"Schrägbank-Curls","muscle":"Bizeps","secondary":[],"reps":"8-12","sets":[{"w":14,"r":6,"rir":0},{"w":14,"r":6,"rir":0}]}]},
+ "logs/d":{"date":D(4),"planId":None,"planName":"Frei","kind":"kraft","entries":[{"name":"Klimmzüge (assistiert)","muscle":"Rücken","secondary":["Bizeps"],"reps":"6-10","sets":[{"w":80,"r":8,"rir":3},{"w":55,"r":10,"rir":1},{"w":55,"r":10,"rir":1}]}]},
  "logs/c":{"date":D(1),"planId":"beine","planName":"Beine","kind":"kraft","rpe":7,"durationMin":60,"entries":[{"name":"Beinpresse","muscle":"Quadrizeps","secondary":["Gesäss"],"reps":"5-8","sets":[{"w":40,"r":9,"rir":5},{"w":85,"r":8,"rir":2},{"w":85,"r":8,"rir":1}]}]},
 }
 for i in range(14):
@@ -33,6 +34,10 @@ CASES=[
  ("Gewichtstrend −0,5 kg/Woche", "Math.round(bwTrend().slope*100)/100", -0.5),
  ("TRIMP 60 min Ø 130 bpm (RHR 50, HRmax 191)", "Math.round(trimp(60,130))", round(60*((130-50)/(191-50))*0.64*math.exp(1.92*((130-50)/(191-50))))),
  ("Epley 100 kg × 10 = 133,3", "Math.round(e1rm(100,10)*10)/10", 133.3),
+ ("Assistiert: viel Unterstützung = Aufwärmsatz", "workSets(S.logs.find(l=>l.planName==='Frei').entries[0]).length", 2),
+ ("Assistiert: Ziel erreicht → 5 kg weniger Unterstützung", "progression({name:'Klimmzüge (assistiert)',reps:'6-10'}).w", 50),
+ ("Assistiert: 1RM aus Körpergewicht minus Unterstützung steigt mit weniger Unterstützung", "e1rm(effLoad('Klimmzüge (assistiert)',50),8) > e1rm(effLoad('Klimmzüge (assistiert)',55),8)", True),
+ ("Back-off-Satz nach dem Topsatz zählt (assistiert 70 kg nach 60 kg)", "workSets({name:'Klimmzüge (assistiert)',sets:[{w:60,r:8,rir:2},{w:60,r:8,rir:1},{w:70,r:8,rir:0}]}).length", 3),
  ("Rotation: nächster Plan = am längsten nicht trainiert (Push)", "(()=>{const h=nextRow(); return /Push/.test(h);})()", True),
 ]
 async def main():

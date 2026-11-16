@@ -436,16 +436,18 @@ function progression(e){
   const last=lastSetsFor(e.name);
   const comp=isCompound(e); const [lo,hi]=parseRange(e.reps, comp);
   if(!last) return {kind:"new", lo, hi, text:`Gewicht wählen, mit dem du ${lo}–${hi} Wdh schaffst (1–2 in Reserve).`};
-  const sets=workSets({sets:last.sets});
+  const sets=workSets({name:e.name,sets:last.sets});
   if(!sets.length) return null;
-  const ws=sets.map(x=>num(x.w)||0); const top=Math.max(...ws);
+  const assisted=isAssisted(e.name);
+  const ws=sets.map(x=>num(x.w)||0); const top=assisted&&ws.some(v=>v>0)?Math.min(...ws.filter(v=>v>0)):Math.max(...ws);
   const topSets=sets.filter(x=>(num(x.w)||0)===top);
   const allTop=topSets.length>=Math.min(sets.length,2) && topSets.every(x=>num(x.r)>=hi);
-  const assisted=/assistiert/i.test(e.name);
   if(top<=0){ return allTop ? {kind:"up", lo, hi, text:`Alle Sätze mit ${hi}+ Wdh geschafft. Zeit für Zusatzgewicht, z. B. 2,5–5 kg.`}
                             : {kind:"reps", lo, hi, target:sets.map(x=>Math.min(hi,num(x.r)+1)), text:`Eine Wiederholung mehr pro Satz, bis du überall ${hi} schaffst.`}; }
   if(assisted){ return allTop ? {kind:"up", lo, hi, w:Math.max(0,top-5), text:`Ziel erreicht. Unterstützung um 5 kg verringern: ${fmtKg(Math.max(0,top-5))} kg, dann wieder ab ${lo} Wdh aufbauen.`}
-                              : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,num(x.r)+1)), text:`Gleiche Unterstützung (${fmtKg(top)} kg), eine Wiederholung mehr pro Satz bis ${hi}.`}; }
+                              : (topSets.filter(x=>num(x.r)<lo).length>=Math.ceil(topSets.length/2)
+                                 ? {kind:"down", lo, hi, w:top+5, text:`Unter ${lo} Wdh gefallen: mehr Unterstützung, ${fmtKg(top+5)} kg, und wieder bis ${hi} Wdh aufbauen.`}
+                                 : {kind:"reps", lo, hi, w:top, target:topSets.map(x=>Math.min(hi,Math.max(lo,num(x.r)+1))), text:`Gleiche Unterstützung (${fmtKg(top)} kg), eine Wiederholung mehr pro Satz bis ${hi}. Weniger Unterstützung = schwerer.`}); }
   const rirs=topSets.map(x=>x.rir==null||x.rir===""?null:num(x.rir)).filter(v=>v!=null);
   const easy=rirs.length && rirs.every(v=>v>=3);
   if(allTop){ const st=weightStep(e,top); const nw=top+(easy?2*st:st); return {kind:"up", lo, hi, w:nw, text: easy?`Obere Grenze mit viel Reserve geschafft: ${fmtKg(nw)} kg (zwei Stufen), Ziel ${lo}+ Wdh.`:`${fmtKg(nw)} kg (oder nächste Stufe), Ziel ${lo}+ Wdh.`}; }
@@ -829,13 +831,21 @@ document.addEventListener("focusout", ()=>{ if(pendingRender) scheduleIdle(); })
 
 /* ---------- derived ---------- */
 /* Aufwärmsätze: <70 % des schwersten Satzes der Übung oder ≥5 Wdh in Reserve. Zählen nicht als Arbeitssätze. */
-function isWarmup(s, sets){
+/* Assistierte Übungen: weniger Unterstützung = schwerer. Effektive Last = Körpergewicht − Unterstützung */
+const isAssisted = name => /assist/i.test(name||"");
+function bwAt(date){ const b=(typeof bwSorted==="function"?bwSorted():[]).filter(x=>!date||x.date<=date); return b.length?b.at(-1).kg:(num(prof().startWeightKg)||80); }
+function effLoad(name,w,date){ w=num(w)||0; return isAssisted(name) ? Math.max(0,bwAt(date)-w) : w; }
+function isWarmup(s, sets, name){
   const rir=s.rir==null||s.rir===""?null:num(s.rir);
   if(rir!=null && rir>=5) return true;
-  const top=Math.max(0,...(sets||[]).map(x=>num(x.w)||0)); const w=num(s.w)||0;
-  return top>0 && w>0 && w<0.7*top;
+  /* nur leichte Sätze VOR dem schwersten Satz sind Aufwärmsätze; leichtere Sätze danach sind Back-off-Sätze und zählen */
+  const ef=x=>isAssisted(name)?effLoad(name,x.w):(num(x.w)||0);
+  const L=(sets||[]).map(ef); const top=Math.max(0,...L); const w=ef(s);
+  const idx=(sets||[]).indexOf(s), firstTop=L.indexOf(top);
+  if(idx>=0 && firstTop>=0 && idx>firstTop) return false;
+  return top>0 && (isAssisted(name) || w>0) && w<0.7*top;
 }
-function workSets(e){ const sets=(e.sets||[]).filter(x=>num(x.r)>0); return sets.filter(x=>!isWarmup(x,sets)); }
+function workSets(e){ const sets=(e.sets||[]).filter(x=>num(x.r)>0); return sets.filter(x=>!isWarmup(x,sets,e.name)); }
 function lastSetsFor(name){
   for(const l of S.logs){ const e=(l.entries||[]).find(x=>x.name===name); if(e && e.sets && e.sets.length) return {date:l.date, sets:e.sets}; }
   return null;
@@ -975,7 +985,7 @@ function vFortschritt(part){
   const cnt = n => S.logs.filter(l=>(l.entries||[]).some(e=>e.name===n && (e.sets||[]).some(s=>num(s.w)>0))).length;
   const sel = names.includes(ui.progEx) ? ui.progEx : [...names].sort((a,b)=>cnt(b)-cnt(a))[0];
   const pts=[];
-  if(sel){ [...S.logs].reverse().forEach(l=>{ const e=(l.entries||[]).find(x=>x.name===sel); if(!e) return; let best=0,top=0,vol=0; (e.sets||[]).forEach(s=>{ const w=num(s.w)||0,r=num(s.r)||0; best=Math.max(best,e1rm(w,r)); top=Math.max(top,w); vol+=w*r; }); if(best) pts.push({date:l.date,e1rm:best,top,vol}); }); }
+  if(sel){ [...S.logs].reverse().forEach(l=>{ const e=(l.entries||[]).find(x=>x.name===sel); if(!e) return; let best=0,top=0,vol=0; (e.sets||[]).forEach(s=>{ const w=effLoad(sel,s.w,l.date),r=num(s.r)||0; best=Math.max(best,e1rm(w,r)); top=Math.max(top,w); vol+=w*r; }); if(best) pts.push({date:l.date,e1rm:best,top,vol}); }); }
   const wkFrom = daysAgo(6);
   const spm = setsPerMuscle(wkFrom);
   const main=["Brust","Rücken","Schultern","Bizeps","Trizeps","Quadrizeps","Beinbeuger","Gesäss","Waden","Bauch"];
@@ -1676,14 +1686,14 @@ function tile(k,color,icon,title,val,unit,sub){
   return `<button class="tile" data-act="sub" data-key="progSub" data-k="${k}"><span class="tt" style="color:${color}">${icon}${title}</span><span class="tv">${val}<small>${unit||""}</small></span><span class="ts">${sub||""}</span></button>`;
 }
 /* «Bist du auf Kurs?» – messbare Ergebnisse nach 4–8 Wochen */
-function sessionE1(l,name){ const e=(l.entries||[]).find(x=>x.name===name); if(!e) return 0; const ws=workSets(e); return Math.max(0,...ws.map(x=>e1rm(num(x.w)||0,num(x.r)||0))); }
+function sessionE1(l,name){ const e=(l.entries||[]).find(x=>x.name===name); if(!e) return 0; const ws=workSets(e); return Math.max(0,...ws.map(x=>e1rm(effLoad(name,x.w,l.date),num(x.r)||0))); }
 function courseRows(){
   const rows=[]; const today=todayStr();
   const st={ok:["var(--good)","✓"],warn:["var(--warn)","!"],wait:["#8E8E93","…"]};
   const add=(k,title,sub,val,tab,extra)=>rows.push({k,title,sub,val,tab,extra});
   const lifts=[];
   /* Kraft: die 4 am häufigsten trainierten Übungen mit Gewicht */
-  const cnt={}; S.logs.forEach(l=>(l.entries||[]).forEach(e=>{ if(!/assist/i.test(e.name) && workSets(e).some(x=>num(x.w)>0)) cnt[e.name]=(cnt[e.name]||0)+1; }));
+  const cnt={}; S.logs.forEach(l=>(l.entries||[]).forEach(e=>{ if(workSets(e).some(x=>num(x.w)>0)) cnt[e.name]=(cnt[e.name]||0)+1; }));
   const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,4);
   top.forEach(n=>{
     const ls=S.logs.filter(l=>sessionE1(l,n)>0).sort((a,b)=>a.date<b.date?-1:1); if(!ls.length) return;
@@ -1729,7 +1739,7 @@ function progressSummary(){
   const names=[...new Set(S.logs.flatMap(l=>(l.entries||[]).map(e=>e.name)))];
   let kVal="–",kSub="Noch keine Trainings";
   if(names.length){ const cnt=n=>S.logs.filter(l=>(l.entries||[]).some(e=>e.name===n)).length; const top=names.sort((a,b)=>cnt(b)-cnt(a))[0];
-    const best=l=>{ const e=(l.entries||[]).find(x=>x.name===top); return e?Math.max(0,...e.sets.map(s=>e1rm(num(s.w)||0,num(s.r)||0))):0; };
+    const best=l=>{ const e=(l.entries||[]).find(x=>x.name===top); return e?Math.max(0,...e.sets.map(s=>e1rm(effLoad(top,s.w,l.date),num(s.r)||0))):0; };
     const ls=S.logs.filter(l=>(l.entries||[]).some(e=>e.name===top)); kVal=Math.round(best(ls[0])); kSub=`${top} · gesch. 1RM`; if(ls.length>1){ const d=best(ls[0])-best(ls.at(-1)); kSub+=` · ${d>=0?"+":""}${Math.round(d)} kg`; } }
   const bw=bwSorted(); const last=bw.at(-1);
   const sp=setsPerMuscle(daysAgo(6)); const inBand=MAIN_MUSCLES.slice(0,9).filter(m=>(sp[m]||0)>=10&&(sp[m]||0)<=20).length;
