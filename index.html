@@ -1264,7 +1264,11 @@ function mealPlanCard(){
   const now=new Date(); const today=todayStr(); const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   const pl=mealPlanDated(all, sh.generatedAt||null).filter(e=>!e.date || e.date>today || (e.date===today && e.end>hm)).map(e=>e.x);
   if(!pl.length) return `<div class="sechead">Essensplan</div><div class="glist">${grow(null,null,"Plan aufgebraucht","Der neue Plan kommt mit der nächsten Einkaufsliste",null)}</div>`;
-  return `<div class="sechead">Essensplan bis zum nächsten Einkauf</div><div class="glist">${pl.map(x=>{ const m=String(x).match(/^([^:]+):\s*(.*)$/); return `<div class="grow"><span class="gt"><b>${esc(m?m[1]:x)}</b>${m?`<span>${esc(m[2])}</span>`:""}</span></div>`; }).join("")}</div>`;
+  if(ui.mealOpen==null){ try{ ui.mealOpen = localStorage.getItem("tb_mealOpen")!=="0"; }catch(e){ ui.mealOpen=true; } }
+  const op=ui.mealOpen; const first=String(pl[0]); const fm=first.match(/^([^:]+):\s*(.*)$/);
+  const chev=`<span style="display:flex;color:var(--muted);${op?"transform:rotate(180deg)":""}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></span>`;
+  const head=`<button class="grow" data-act="mealtoggle" aria-expanded="${op}"><span class="gt"><b>${op?`${pl.length} Mahlzeiten bis zum nächsten Einkauf`:`Als Nächstes · ${esc(fm?fm[1]:"")}`}</b><span>${op?"Zuklappen":esc(fm?fm[2]:first)}</span></span>${chev}</button>`;
+  return `<div class="sechead">Essensplan</div><div class="glist">${head}${op?pl.map(x=>{ const m=String(x).match(/^([^:]+):\s*(.*)$/); return `<div class="grow"><span class="gt"><b>${esc(m?m[1]:x)}</b>${m?`<span>${esc(m[2])}</span>`:""}</span></div>`; }).join(""):""}</div>`;
 }
 function foodsCard(){
   const F=S.foods; if(!F||!(F.groups||[]).length) return "";
@@ -1947,6 +1951,7 @@ function bind(){
       if(ok){ const mins=d.startedAt?Math.round((Date.now()-d.startedAt)/60000):null; setDraft(null); render(); rpeSheet(d.id, mins&&mins>=10&&mins<=240?mins:60); } else b.disabled=false;
     }
     if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
+    if(a==="mealtoggle"){ ui.mealOpen=!ui.mealOpen; try{ localStorage.setItem("tb_mealOpen", ui.mealOpen?"1":"0"); }catch(e){} const y=window.scrollY; render(); window.scrollTo(0,y); return; }
     if(a==="coursetoggle"){ ui.courseOpen=!ui.courseOpen; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
     if(a==="toggleplan"){ ui.openPlan = ui.openPlan===b.dataset.id ? null : b.dataset.id; render(); return; }
     if(a==="editplan"){ ui.editPlan=b.dataset.id; planDraft=JSON.parse(JSON.stringify(S.plans.find(x=>x.id===ui.editPlan))); renderPlanDraft(); }
