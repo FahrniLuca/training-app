@@ -894,7 +894,7 @@ function vTrainStart(){
   ${dayCard()}
   <section class="card">
     <h2>Gespeicherte Trainings</h2>
-    ${recent.length? `<div class="list">${recent.map(l=>`<div class="li"><div class="t"><b>${esc(l.planName||"Training")}</b><span class="small muted">${fmtDate(l.date)} · ${(l.entries||[]).length} Übungen · ${(l.entries||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} Sätze${l.durationMin?" · "+l.durationMin+" min":""}</span></div><button class="tiny ghost" style="color:var(--muted);font-weight:400" data-act="dellog" data-id="${esc(l.id)}" aria-label="Einheit löschen">Löschen</button></div>`).join("")}</div>`
+    ${recent.length? `<div class="list">${recent.map(l=>`<div class="li"><div class="t"><b>${esc(l.planName||"Training")}</b><span class="small muted">${fmtDate(l.date)} · ${(l.entries||[]).length} Übungen · ${(l.entries||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} Sätze${l.durationMin?" · "+l.durationMin+" min":""}</span></div><div class="row" style="gap:4px;flex:none">${l.date>=daysAgo(1)?`<button class="tiny" data-act="reopen" data-id="${esc(l.id)}" aria-label="Training wieder öffnen">Weiter</button>`:""}<button class="tiny ghost" style="color:var(--muted);font-weight:400" data-act="dellog" data-id="${esc(l.id)}" aria-label="Einheit löschen">Löschen</button></div></div>`).join("")}</div>`
       : `<p class="muted">Hier erscheinen deine Einheiten, sobald du das erste Training speicherst.</p>`}
   </section>${sick}`;
 }
@@ -1949,6 +1949,22 @@ function bind(){
       b.disabled=true;
       const ok=await save("logs/"+d.id,{date:d.date,planId:d.planId,planName:d.planName,kind:d.kind||"kraft",durationMin:d.durationMin||null,note:d.note||"",entries,savedAt:new Date().toISOString()});
       if(ok){ const mins=d.startedAt?Math.round((Date.now()-d.startedAt)/60000):null; setDraft(null); render(); rpeSheet(d.id, mins&&mins>=10&&mins<=240?mins:60); } else b.disabled=false;
+    }
+    if(a==="reopen"){
+      /* Gespeichertes Training wieder öffnen: gleiche ID, beim erneuten Speichern wird es überschrieben */
+      if(getDraft()){ toast("Es läuft schon ein Training"); return; }
+      const l=S.logs.find(x=>x.id===b.dataset.id); if(!l) return;
+      const p=S.plans.find(x=>x.id===l.planId);
+      const str=v=>v==null?"":String(v);
+      const toDraft=e=>{ const pe=(p?.exercises||[]).find(x=>x.name===e.name)||{}; const dist=metricOf(e)==="dist";
+        return {name:e.name,muscle:e.muscle,metric:metricOf(e),reps:e.reps||pe.reps||"",secondary:e.secondary||secOf(e),compound:isCompound(pe.name?pe:e),
+          target:pe.name?[pe.sets?pe.sets+"×":"",pe.reps||"",pe.weight?" @ "+pe.weight+" "+unitOf(pe.name):""].join(""):"",note:pe.note||"",
+          sets:(e.sets||[]).map(x=>dist?{w:str(x.w),r:str(x.m),rir:str(x.t),done:true}:{w:str(x.w),r:str(x.r),rir:str(x.rir),done:true})}; };
+      const entries=(l.entries||[]).map(toDraft);
+      (p?.exercises||[]).forEach(pe=>{ if(!entries.some(e=>e.name===pe.name)) entries.push({name:pe.name,muscle:pe.muscle,metric:metricOf(pe),reps:pe.reps||"",secondary:secOf(pe),compound:isCompound(pe),target:[pe.sets?pe.sets+"×":"",pe.reps||"",pe.weight?" @ "+pe.weight+" "+unitOf(pe.name):""].join(""),note:pe.note||"",sets:Array.from({length:pe.sets||3},()=>({w:"",r:"",rir:""}))}); });
+      const started = l.savedAt && l.durationMin ? new Date(l.savedAt).getTime()-l.durationMin*60000 : (l.savedAt? new Date(l.savedAt).getTime()-60*60000 : Date.now());
+      setDraft({id:l.id,startedAt:started,date:l.date,planId:l.planId||null,planName:l.planName||"Training",kind:l.kind||"kraft",note:l.note||"",entries,reopened:true});
+      render(); scrollTop(); toast("Training wieder geöffnet"); return;
     }
     if(a==="dellog"){ if(b.dataset.confirm){ await save("logs/"+b.dataset.id,null,"delete"); toast("Gelöscht"); } else { b.dataset.confirm="1"; b.textContent="Sicher?"; } }
     if(a==="mealtoggle"){ ui.mealOpen=!ui.mealOpen; try{ localStorage.setItem("tb_mealOpen", ui.mealOpen?"1":"0"); }catch(e){} const y=window.scrollY; render(); window.scrollTo(0,y); return; }
