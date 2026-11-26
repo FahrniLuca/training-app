@@ -21,6 +21,9 @@ for i in range(14):
     docs[f"bodyweight/{D(i)}"]={"date":D(i),"kg":round(80-(13-i)*(-0.5/7)*-1,3)}  # -0.5 kg/Woche
 for i in range(10):
     docs[f"garmin/{D(i)}"]={"date":D(i),"hrv":80,"rhr":50,"sleepH":8,"steps":0}
+docs[f"logs/h"]={"date":D(8),"planId":"hyrox","planName":"Hyrox","kind":"hyrox","rpe":7,"durationMin":39,"savedAt":f"{D(8)}T14:28:00","entries":[]}
+docs[f"garmin/{D(8)}"]["activities"]=[{"type":"hiit","name":"HIIT","start":"13:50","min":38,"avgHr":149,"maxHr":191}]
+docs[f"garmin/{D(9)}"]["activities"]=[{"type":"strength_training","name":"Krafttraining","start":"21:00","min":50,"avgHr":120,"maxHr":160}]
 docs=json.loads(json.dumps(docs))
 for k in docs: docs[k]["_u"]=1
 CASES=[
@@ -41,6 +44,8 @@ CASES=[
  ("Assistiert: 1RM aus Körpergewicht minus Unterstützung steigt mit weniger Unterstützung", "e1rm(effLoad('Klimmzüge (assistiert)',50),8) > e1rm(effLoad('Klimmzüge (assistiert)',55),8)", True),
  ("Back-off-Satz nach dem Topsatz zählt (assistiert 70 kg nach 60 kg)", "workSets({name:'Klimmzüge (assistiert)',sets:[{w:60,r:8,rir:2},{w:60,r:8,rir:1},{w:70,r:8,rir:0}]}).length", 3),
  ("Back-off: 3. Satz leichter → nicht steigern", "progression({name:'Kabel-Curls',reps:'8-12'}).kind", "reps"),
+ ("Hyrox in der App + HIIT von Garmin = eine Einheit", "dayStrain(daysAgo(8)).items.filter(i=>i.kind!=='alltag').length", 1),
+ ("Garmin-Kraft ohne App-Training zählt weiter", "dayStrain(daysAgo(9)).items.filter(i=>i.kind!=='alltag').length", 1),
  ("Rotation: nächster Plan = am längsten nicht trainiert (Push)", "(()=>{const h=nextRow(); return /Push/.test(h);})()", True),
 ]
 async def main():

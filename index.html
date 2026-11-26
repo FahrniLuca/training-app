@@ -1514,16 +1514,33 @@ function updHrMax(){ const obs=Math.max(0,...S.garmin.filter(x=>x.date>=daysAgo(
 function rhrRef(){ const v=S.garmin.filter(x=>x.rhr>0 && x.sleepH!=null && x.date>=daysAgo(30)).map(x=>x.rhr); return median(v)||55; }
 function trimp(min,avg){ if(!min||!avg) return 0; const r=rhrRef(); const x=clamp((avg-r)/(HRMAX-r),0,1); return min*x*0.64*Math.exp(1.92*x); }
 const to21 = t => 21*(1-Math.exp(-t/81));
+/* Ein Training in der App und die Garmin-Aktivität derselben Einheit (Kraft = strength, Hyrox meist = HIIT) sind dasselbe.
+   Zuordnung: gleicher Tag, passende Art, Startzeit innerhalb von 90 min (Start = gespeichert − Dauer); ohne Zeit die erste passende. */
+function matchLogsToActs(d, g){
+  const acts=(g?.activities||[]); const byAct={}; const byLog=new Map();
+  const hm=s=>{ const m=String(s||"").match(/(\d{1,2}):(\d{2})/); return m?(+m[1])*60+(+m[2]):null; };
+  const fits=(l,a)=>{ const t=(a.type||"")+" "+(a.name||""); const hy=l.kind==="hyrox"||/hyrox/i.test(l.planName||"");
+    return hy ? /hiit|cardio|hyrox|strength|training/i.test(t) : /strength|kraft|hiit/i.test(t); };
+  S.logs.filter(l=>l.date===d).forEach(l=>{
+    let ls=null; if(l.savedAt){ const e=new Date(l.savedAt); ls=e.getHours()*60+e.getMinutes()-(+l.durationMin||0); }
+    let best=null, bd=1e9;
+    acts.forEach((a,ai)=>{ if(byAct[ai]||!fits(l,a)) return; const as=hm(a.start);
+      const dd=(ls!=null&&as!=null)?Math.abs(ls-as):500; if(ls!=null&&as!=null&&dd>90) return; if(dd<bd){ bd=dd; best=ai; } });
+    if(best!=null){ byAct[best]=l; byLog.set(l,best); } });
+  return {byAct, byLog};
+}
 function dayStrain(d){
   updHrMax();
   const items=[];
   const rpeLogs=S.logs.filter(l=>l.date===d && l.rpe>0 && l.durationMin>0);
   const g=S.garmin.find(x=>x.date===d);
-  (g?.activities||[]).forEach(a=>{ if(rpeLogs.length && /strength/.test(a.type||"")) return; const t=trimp(a.min, a.avgHr||(a.type&&/strength/.test(a.type)?110:130)); items.push({name:a.name||a.type, start:a.start, min:a.min, t, kind:/run|lauf/i.test(a.type||"")?"lauf":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":/hiit|hyrox/i.test((a.type||"")+(a.name||""))?"hyrox":"other"}); });
+  const M=matchLogsToActs(d, g);
+  (g?.activities||[]).forEach((a,ai)=>{ const lg=M.byAct[ai]; if(lg && lg.rpe>0 && lg.durationMin>0) return; const t=trimp(a.min, a.avgHr||(a.type&&/strength/.test(a.type)?110:130)); items.push({name:a.name||a.type, start:a.start, min:a.min, t, kind:/run|lauf/i.test(a.type||"")?"lauf":/strength|kraft/i.test((a.type||"")+(a.name||""))?"kraft":/hiit|hyrox/i.test((a.type||"")+(a.name||""))?"hyrox":"other"}); });
   S.runs.filter(r=>r.date===d).forEach(r=>{ const t=trimp(r.min||r.km*6, 150); items.push({name:"Lauf (manuell)", min:r.min, t, kind:"lauf"}); });
   /* Session-RPE (Foster 2001): Härte 1–10 × Minuten. Umrechnung ÷6 auf die TRIMP-Skala (60 min bei RPE 7 ≈ 70). */
-  rpeLogs.forEach(l=>items.push({name:(l.planName||"Training")+` (Härte ${l.rpe})`, min:l.durationMin, t:l.rpe*l.durationMin/6, kind:"kraft"}));
-  const sets=S.logs.filter(l=>l.date===d && !(l.rpe>0 && l.durationMin>0)).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+workSets(e).length,0),0);
+  rpeLogs.forEach(l=>items.push({name:(l.planName||"Training")+` (Härte ${l.rpe})`, min:l.durationMin, t:l.rpe*l.durationMin/6, kind:(l.kind==="hyrox"||/hyrox/i.test(l.planName||""))?"hyrox":"kraft"}));
+  /* Logs ohne Härte: liegt eine passende Garmin-Aktivität vor, zählt deren Puls – sonst Schätzung über Sätze */
+  const sets=S.logs.filter(l=>l.date===d && !(l.rpe>0 && l.durationMin>0) && !M.byLog.has(l)).reduce((a,l)=>a+(l.entries||[]).reduce((b,e)=>b+workSets(e).length,0),0);
   if(sets) items.push({name:"Harte Sätze (Schätzung, Härte fehlt)", sets, t:sets*1.2, kind:"kraft", est:true});
   /* Alltag: Schritte ausserhalb der Trainings, als lockeres Gehen (~100 Schritte/min bei ~33 % Herzfrequenzreserve) */
   if(g && g.steps>0){
