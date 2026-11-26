@@ -1601,6 +1601,19 @@ function suggestedPlanId(){
   return rot.reduce((best,p)=>lastDone(p)<lastDone(best)?p:best, rot[0]).id;
 }
 function nextRow(){
+  /* Heute schon trainiert: kein Start-Knopf, das nächste Training erst für morgen anzeigen */
+  const today=todayStr(); const pv=prof().vacation;
+  const doneToday=S.logs.filter(l=>l.date===today);
+  if(doneToday.length && !(pv&&pv.on)){
+    const names=[...new Set(doneToday.map(l=>l.planName||"Training"))].join(" + ");
+    const inner=nextRowInner(addDays(today,1));
+    const m=inner.match(/<h2>([^<]*)<\/h2>/); const nx=m?m[1]:"";
+    const sub=inner.match(/<span class="small muted">([^<]*)<\/span>/);
+    return `<div class="sechead">Morgen</div><div class="glist">${grow(I2.dumb,"var(--c-kraft)",nx||"Erholung",`Heute schon trainiert (${esc(names)})`+(sub&&/danach/.test(sub[1])?" · "+sub[1]:""),null,["goto",null,null,"training"])}</div>`;
+  }
+  return nextRowInner(today);
+}
+function nextRowInner(today){
   const pv=prof().vacation;
   if(pv&&pv.on) return `<div class="glist">${grow(I2.moon,"var(--c-ruhe)","Ferienmodus aktiv","seit "+fmtDate(pv.since)+" · keine Trainingsvorgaben",null,["goto",null,null,"coach"])}</div>`;
   const kraft=S.plans.filter(p=>(p.kind||"kraft")==="kraft" && (p.exercises||[]).length).sort((a,b)=>(a.order??99)-(b.order??99));
@@ -1613,7 +1626,7 @@ function nextRow(){
     next=rot.reduce((best,p)=>lastDone(p)<lastDone(best)?p:best, rot[0]); }
   const r=recovery(); const adj=r&&r.level>=2?" · heute 1 Satz weniger":"";
   /* coach-planned session overrides rotation until its date has passed or it was done */
-  const ps=prof().planned; const today=todayStr();
+  const ps=prof().planned;
   if(ps && ps.planId && ps.date>=today && !S.logs.some(l=>l.date===ps.date && l.planId===ps.planId)){
     const pp=S.plans.find(x=>x.id===ps.planId);
     if(pp){ const when=ps.date===today?"Heute":fmtDate(ps.date); const n=(pp.exercises||[]).filter(e=>!(ps.skip||[]).includes(e.name)).length;
